@@ -124,8 +124,8 @@ Thần số học:
 
 Tarot (subscription, KHÔNG auto-renew):
 
-- Tarot 1 tháng: "29.000₫ / 30 ngày" — trải bài 1 lá và 3 lá không giới hạn.
-- Tarot 3 tháng: "79.000₫ / 90 ngày" — tiết kiệm ~9% so với mua từng tháng.
+- Tarot 1 tháng: "29.000₫ / 30 ngày" — trải bài 1/3 lá không giới hạn và mở trải bài 5/7/10/12 lá.
+- Tarot 3 tháng: "79.000₫ / 90 ngày" — cùng quyền lợi trải bài trong 90 ngày, tiết kiệm ~9% so với mua từng tháng.
 - Phải ghi rõ "Hiệu lực X ngày" — không gọi là subscription tự động.
 - Không auto-renew; có Telegram reminder 3 ngày trước hết hạn (T-0504b).
 - Không hứa quyền/gói ngoài scope trong V2 nếu chưa có chính sách riêng được user approve.

@@ -1,6 +1,6 @@
 "use client";
 
-import { createError, isAppError, type AppError } from "@banmenh/shared";
+import { createError, findProduct, formatPriceVnd, isAppError, type AppError } from "@banmenh/shared";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 
@@ -12,6 +12,7 @@ import { fetchWithAuth } from "../../../../lib/api/client";
 type ReportResponse = {
   ok: true;
   report: NumerologyReportWithSections;
+  unlocked: boolean;
 };
 
 function buildSummaryHref(search: { toString: () => string }) {
@@ -24,6 +25,7 @@ function ResultDetailsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [report, setReport] = useState<NumerologyReportWithSections | null>(null);
+  const [unlocked, setUnlocked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<AppError | null>(null);
 
@@ -49,6 +51,7 @@ function ResultDetailsContent() {
         body: JSON.stringify(input),
       });
       setReport(response.report);
+      setUnlocked(response.unlocked);
     } catch (err) {
       setError(isAppError(err) ? err : createError("INTERNAL_ERROR"));
     } finally {
@@ -66,9 +69,20 @@ function ResultDetailsContent() {
   }
   if (!report) return <ErrorState code="KB_NOT_AVAILABLE" onRetry={fetchReport} />;
 
+  const product = findProduct("numerology_single_report");
+  const query = searchParams.toString();
+  const paymentHref = query ? `/than-so-hoc/payment?${query}` : "/than-so-hoc/payment";
+  const price = formatPriceVnd(product?.priceVnd ?? 0);
+
   return (
     <PageShell title="Luận giải Thần số học" showBack backHref={summaryHref} backLabel="Tổng quan">
-      <FullReport report={report} userName={input.fullName} />
+      <FullReport
+        paymentHref={paymentHref}
+        price={price}
+        report={report}
+        unlocked={unlocked}
+        userName={input.fullName}
+      />
 
       <div className="mt-10 text-sm leading-relaxed text-[var(--bm-text-muted)]">
         <p>

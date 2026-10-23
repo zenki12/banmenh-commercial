@@ -48,6 +48,10 @@ export type SectionBlock = {
   } | null;
   intro?: string;
   html: string;
+  /** Bản HTML đã lược bỏ nội dung VIP, chỉ dùng trước khi API redaction cho tài khoản Free. */
+  previewHtml?: string;
+  /** Quyền hiển thị do API gắn sau khi kiểm tra entitlement. */
+  access?: "full" | "partial" | "locked";
   chartSlot?: "pyramid" | "birth-grid" | "combined-grid" | "career-bars";
 };
 
@@ -135,12 +139,12 @@ function renderMaturityAbility(report: NumerologyReport, name: string): string {
   return html;
 }
 
-function buildBirthGridNarrative(report: NumerologyReport, name: string): string {
+function buildBirthGridNarrative(report: NumerologyReport, name: string, includeArrows = true): string {
   const dobGridData = parseDigitGrid(report.input.dob);
   return (
     `<p class="nar">Ma trận 3×3 của Pythagoras đặt từng chữ số trong ngày sinh vào ô tương ứng theo vị trí số học. Ngày sinh của <strong>${escapeHtml(name)}</strong> (${escapeHtml(report.input.dob)}) cho ra biểu đồ sau — các ô đầy là điểm mạnh năng lượng bẩm sinh; ô trống là những bài học cần được bổ sung từ biểu đồ tên.</p>` +
     buildCellAnalysis(dobGridData, "dob") +
-    buildArrowsAnalysis(dobGridData, "Biểu đồ Ngày Sinh")
+    (includeArrows ? buildArrowsAnalysis(dobGridData, "Biểu đồ Ngày Sinh") : "")
   );
 }
 
@@ -159,7 +163,7 @@ function section(
   number: string,
   title: string,
   html: string,
-  options: Pick<SectionBlock, "intro" | "chartSlot" | "quickIntro" | "titleBadge"> = {},
+  options: Pick<SectionBlock, "intro" | "chartSlot" | "previewHtml" | "quickIntro" | "titleBadge"> = {},
 ): SectionBlock {
   return {
     id: `section-${number.replace(/[^\dA-Za-z]+/g, "-").replace(/^-|-$/g, "")}`,
@@ -622,12 +626,17 @@ export function buildSynthesizedReport(input: SynthesizerInput): SynthesizedRepo
           quickIntro: null,
           },
         ),
-        section("5", "Chu Kỳ Đường Đời", buildLifeCyclesSection(report, name)),
+        section("5", "Chu Kỳ Đường Đời", buildLifeCyclesSection(report, name), {
+          previewHtml: buildLifeCyclesSection(report, name, 1),
+        }),
         section(
           "6",
           "Biểu đồ Kim Tự Tháp — Đỉnh cao & Thử thách",
           buildPyramidSection(report, name, narrative),
-          { chartSlot: "pyramid" },
+          {
+            chartSlot: "pyramid",
+            previewHtml: buildPyramidSection(report, name, narrative, true),
+          },
         ),
         section(
           "7",
@@ -701,7 +710,10 @@ export function buildSynthesizedReport(input: SynthesizerInput): SynthesizedRepo
       letter: "D",
       title: "PHÂN TÍCH NĂNG LỰC & BIỂU ĐỒ SỨC MẠNH",
       sections: [
-        section("23", "Biểu đồ Sức Mạnh — Lưới Ngày Sinh (Pythagoras)", buildBirthGridNarrative(report, name), { chartSlot: "birth-grid" }),
+        section("23", "Biểu đồ Sức Mạnh — Lưới Ngày Sinh (Pythagoras)", buildBirthGridNarrative(report, name), {
+          chartSlot: "birth-grid",
+          previewHtml: buildBirthGridNarrative(report, name, false),
+        }),
         section("24", "Biểu đồ Tên & Biểu đồ Tổng Hợp", buildNameCombinedGridNarrative(report, name), { chartSlot: "combined-grid" }),
         section("25", "Chỉ số Thái Độ", renderIndicator(narrative, "attitude", "Thái độ", report.attitude, name)),
         section("26", "Chỉ số Ngày Sinh (Tài năng Tự nhiên)", renderIndicator(narrative, "birthday", "Ngày sinh", report.birthday, name)),

@@ -738,7 +738,7 @@ function formatYearRange(birthYear: number, startAge: number, endAge?: number): 
   return typeof endAge === "number" ? `${startYear} - ${birthYear + endAge}` : `${startYear} trở đi`;
 }
 
-export function buildLifeCyclesSection(report: NumerologyReport, name: string): string {
+export function buildLifeCyclesSection(report: NumerologyReport, name: string, detailLimit = 3): string {
   const safeName = escapeHtml(name);
   const birthYear = report.input.dobParts.year;
   const stages: LifeCycleStage[] = report.lifeCycles.slice(0, 3).map((cycle, index) => {
@@ -773,6 +773,7 @@ export function buildLifeCyclesSection(report: NumerologyReport, name: string): 
   </div>`;
 
   const details = stages
+    .slice(0, Math.max(0, detailLimit))
     .map((stage) => {
       const { startAge, endAge } = parseLifeCyclePeriod(stage.cycle.period);
       const ageRange = formatAgeRange(startAge, endAge);

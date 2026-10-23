@@ -44,7 +44,7 @@ Spec ready for MVP planning
 
 - Không clone code/asset/endpoint/branding của Mystery Tarot/TAROT-vibe.
 - Không gọi Gemini trực tiếp từ frontend và không mở rộng AI ngoài ADR-009/T-0709.
-- Không mở spread lớn trước khi 1/3 lá ổn.
+- Spread 5/7/10/12 chỉ được mở sau khi luồng 1/3 lá ổn định và phải gate bằng entitlement Tarot ở cả UI lẫn API.
 - Không thêm payment/AI/storage mới nếu chưa có ADR hoặc task rõ.
 
 ## Data Model
@@ -84,7 +84,7 @@ Spec ready for MVP planning
 - KB/asset có yêu cầu credit/licensing.
 - Upsell quá sớm làm lệch journey.
 - History chứa câu hỏi nhạy cảm.
-- App phình nếu mở 5/7/10/12 lá quá sớm.
+- Spread 5/7/10/12 có thể làm app phình; giữ chung workflow, không nhân bản component và luôn kiểm tra entitlement server-side.
 
 ## V2 Workflow Reference
 

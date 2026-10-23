@@ -54,12 +54,14 @@ export function SpreadOption({
   active,
   hint,
   label,
+  locked = false,
   value,
   onClick,
 }: {
   active: boolean;
   hint: string;
   label: string;
+  locked?: boolean;
   value: Spread;
   onClick: () => void;
 }) {
@@ -77,7 +79,7 @@ export function SpreadOption({
       <div className="flex items-center justify-between gap-3">
         <span className="font-black text-[var(--bm-text-main)]">{label}</span>
         <span className="rounded-full border border-[var(--bm-border-gold)] px-3 py-1 text-xs font-black text-[var(--bm-gold-bright)]">
-          {value}
+          {locked ? "VIP · Khóa" : `${value} lá`}
         </span>
       </div>
       <p className="mt-2 text-sm leading-6 text-[var(--bm-text-muted)]">{hint}</p>

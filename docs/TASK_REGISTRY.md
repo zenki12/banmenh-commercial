@@ -42,6 +42,129 @@ Done        Đã hoàn tất và đối chiếu đủ điều kiện done
 
 ## Ad-hoc - Audit Fixes
 
+### T-BRAND-FAVICON-TITLES - Favicon và tiêu đề tab động
+
+Status: Review
+
+Bối cảnh:
+
+- Website cần đồng bộ nhận diện favicon mới và tiêu đề tab theo từng route.
+- Các trang client dùng chung `PageShell`, còn Tarot và Thần số học là Server Components độc lập.
+
+Yêu cầu:
+
+- Phân phối `favicon.png` qua public asset và metadata file conventions của Next.js App Router.
+- Root metadata dùng title mặc định và template thương hiệu thống nhất.
+- `PageShell` cập nhật `document.title` theo prop `title` khi route client thay đổi.
+- Tarot và Thần số học khai báo metadata route riêng.
+
+Điều kiện Done:
+
+- `npm run typecheck`, `npm run build`, `git diff --check` pass.
+- Favicon mới được phục vụ và khai báo cho icon/Apple touch icon.
+- Trang chủ, Thần số học, Tarot, Bảng giá và Tài khoản hiển thị đúng title yêu cầu.
+- Chờ code review độc lập trước khi chuyển `Done`.
+
+Kết quả triển khai 2026-10-23:
+
+- Đã sao chép nguyên vẹn favicon nguồn vào public asset, App Router icon và Apple touch icon; cả bốn file có cùng SHA-256.
+- Root metadata có default title, title template, description và icon declarations; Tarot/Thần số học có route metadata riêng.
+- `PageShell` đồng bộ title client và chống việc metadata streaming của Next.js ghi đè sau hydration.
+- Header dùng chính favicon mới làm brand mark thay cho chấm vàng, giữ kích thước cố định và hiển thị cân đối ở desktop/mobile.
+- Typecheck, lint, build, `git diff --check` và browser smoke cho năm route nghiệm thu đều pass; chờ code review độc lập trước khi chuyển `Done`.
+
+### T-AUTH-SIMPLIFY - Tinh gọn đăng nhập Google 1-click
+
+Status: Review
+
+Bối cảnh:
+
+- Header Commercial Edition đang mở modal Google/Email trung gian, làm luồng đăng nhập dài hơn pattern đã ổn định của `banmenh v2`.
+- AuthProvider và PaymentSetup đã có nền Google popup trực tiếp cùng session sync về `/api/auth/session`.
+
+Yêu cầu:
+
+- Header gọi Google popup trực tiếp khi người dùng bấm `Đăng nhập`.
+- Khách ẩn danh thấy huy hiệu `Khách` và nút `Liên kết Google` gọi `linkAnonymousToGoogle` trực tiếp.
+- Khi credential Google đã tồn tại, tự chuyển từ link sang đăng nhập tài khoản Google tương ứng.
+- Ngừng tham chiếu và loại bỏ `AuthDialog`; không thêm dependency và không thay đổi session sync.
+
+Điều kiện Done:
+
+- `npm run typecheck`, `npm run lint`, `npm run build`, `git diff --check` pass.
+- Header desktop/mobile không còn modal hoặc form Email/Password; Google popup được gọi trực tiếp.
+- Header cập nhật tên/avatar sau khi Firebase auth state thay đổi.
+- Chờ code review độc lập trước khi chuyển `Done`.
+
+Kết quả triển khai 2026-10-23:
+
+- Header gọi trực tiếp `signInWithGoogle` cho tài khoản chưa đăng nhập và `linkAnonymousToGoogle` cho khách ẩn danh; không còn modal trung gian hoặc copy Google/Email.
+- Đã loại bỏ `AuthDialog`; fallback credential đã tồn tại trong `AuthProvider` tự chuyển sang `signInWithPopup`, còn session sync `/api/auth/session` được giữ nguyên.
+- Typecheck, lint, build, `git diff --check` và visual smoke desktop/mobile pass.
+- Chờ kiểm thử chọn tài khoản Gmail thực tế bằng Firebase dev credentials và code review độc lập trước khi chuyển `Done`.
+
+### T-COMM-NUMEROLOGY-PAYWALL - In-line Paywall cho báo cáo Thần số học
+
+Status: Review
+
+Bối cảnh:
+
+- Hard paywall hiện chặn toàn bộ trang chi tiết và làm bản Tổng quan thiếu chỉ số/biểu đồ.
+- Cần cho người dùng Free đọc phần giá trị cốt lõi, đồng thời khóa chọn lọc luận giải chuyên sâu mà không gửi nội dung VIP thô xuống client.
+
+Yêu cầu:
+
+- Tổng quan luôn hiển thị 8 chỉ số, 3 biểu đồ và CTA sang trang chi tiết.
+- Trang chi tiết mở cho Free/VIP; Free thấy teaser tại các mục chuyên sâu, VIP thấy toàn bộ nội dung.
+- Giữ nguyên Pyramid SVG, Birth Grid và Career Bars; redaction nội dung khóa phải thực hiện server-side.
+- Không thêm dependency, không đổi pricing, payment transaction hoặc Firestore rules.
+
+Điều kiện Done:
+
+- `npm run typecheck`, `npm run lint`, `npm run build`, `git diff --check` pass.
+- Free payload không chứa HTML luận giải của các mục bị khóa.
+- Tổng quan và báo cáo chi tiết render đúng ở desktop/mobile; CTA dẫn đúng `/than-so-hoc/payment`.
+
+Kết quả triển khai 2026-10-23:
+
+- Đã chuyển từ hard paywall sang in-line teaser paywall; Tổng quan mở đủ 8 chỉ số và 3 biểu đồ, trang Chi tiết mở cho mọi người dùng.
+- API redaction phía server chỉ trả HTML đầy đủ cho mục mở, HTML preview cho mục mở một phần và HTML rỗng cho mục khóa; payload Free không chứa phần luận giải VIP bị khóa.
+- Báo cáo hiện có 31 mục nên quy tắc theo ý nghĩa được áp dụng tại mục thực tế: Nợ Nghiệp ở mục 22 bị khóa, Lưới Ngày Sinh ở mục 23 mở một phần, mục 24-31 bị khóa.
+- Đã kiểm tra typecheck, lint, build, `git diff --check`, payload Free và render Edge headless tại desktop/mobile; chờ code review độc lập trước khi chuyển `Done`.
+
+### T-COMM-B2C-1 - Hoàn thiện Commercial Edition auth, paywall và PayOS
+
+Status: Review
+
+Bối cảnh:
+
+- Product owner yêu cầu mở lại đầy đủ luồng B2C độc lập trên `banmenh.online`.
+- Nền Google Auth, pricing, PayOS, entitlement và paywall đã có nhưng còn thiếu Email Auth, route payment Tarot, quota Tarot và một số gate đang không đúng trạng thái thương mại.
+
+Yêu cầu:
+
+- Header hiển thị đủ navigation, đăng nhập Google/Email, avatar và link `/account`.
+- Thần số học chỉ hiển thị phần free; nội dung chuyên sâu bị khóa và CTA dùng giá từ `packages/shared/src/pricing.ts`.
+- `/than-so-hoc/payment` tạo QR PayOS; webhook chỉ cấp entitlement sau xác nhận hợp lệ.
+- Tarot free tối đa 3 lượt/ngày; spread 5/7/10/12 yêu cầu entitlement Tarot và hiển thị popup nâng cấp.
+- Bổ sung route payment module-scoped cho Tarot và đồng bộ `.env.example` với domain thương mại.
+- Không deploy production, không ghi secret thật.
+
+Điều kiện Done:
+
+- `npm run typecheck`, `npm run lint`, `npm run build` pass.
+- Auth Google/Email có error state tiếng Việt; account menu có avatar và route `/account`.
+- API Numerology không hardcode unlock và không trả section premium khi thiếu entitlement.
+- Tarot quota/paid gate được enforce server-side; UI có popup nâng cấp và CTA PayOS.
+- PayOS create/check/webhook giữ backend làm nguồn sự thật cho amount và entitlement.
+- Security smoke không phát hiện secret/KB leak; DEVLOG và tài liệu contract liên quan được cập nhật.
+
+Kết quả triển khai 2026-10-23:
+
+- Đã hoàn tất code, typecheck, lint, build và security smoke.
+- Code review fix `T-COMM-B2C-1-FIX`: đã sửa nhãn provider Email tại `/account`, chuẩn hóa `@reference` lên đầu hai stylesheet Numerology và xác định Anonymous theo Firebase `sign_in_provider` trong session API.
+- Chờ code review độc lập và kiểm thử tích hợp bằng Firebase/PayOS dev credentials trước khi chuyển `Done`.
+
 ### T-AUDIT-S2 - Post-Sprint-1 + Tarot audit fixes
 
 Status: Done

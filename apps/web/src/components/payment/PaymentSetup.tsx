@@ -121,7 +121,7 @@ export function PaymentSetup({ productCode }: PaymentSetupProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const product = useMemo(() => (productCode ? findProduct(productCode) : undefined), [productCode]);
-  const { user, signInWithGoogle } = useAuth();
+  const { user, isAnonymous, linkAnonymousToGoogle, signInWithGoogle } = useAuth();
   const [voucherCode, setVoucherCode] = useState("");
   const [voucherStatus, setVoucherStatus] = useState<VoucherStatus>("idle");
   const [voucherResult, setVoucherResult] = useState<VoucherResult | null>(null);
@@ -181,7 +181,9 @@ export function PaymentSetup({ productCode }: PaymentSetupProps) {
   }
 
   async function ensureSignedIn() {
-    if (!user) await signInWithGoogle();
+    if (!user) return await signInWithGoogle();
+    if (isAnonymous) return await linkAnonymousToGoogle();
+    return true;
   }
 
   async function handleApplyVoucher() {
@@ -196,7 +198,11 @@ export function PaymentSetup({ productCode }: PaymentSetupProps) {
     setVoucherResult(null);
     setVoucherError(null);
     try {
-      await ensureSignedIn();
+      const signedIn = await ensureSignedIn();
+      if (!signedIn) {
+        setVoucherStatus("idle");
+        return;
+      }
       const data = await fetchWithAuth<VoucherValidateResponse>("/api/voucher/validate", {
         method: "POST",
         body: JSON.stringify({ code: normalized, productCode: selectedProduct.code }),
@@ -222,7 +228,11 @@ export function PaymentSetup({ productCode }: PaymentSetupProps) {
     setCreating(true);
     setCreateErrorState(null);
     try {
-      await ensureSignedIn();
+      const signedIn = await ensureSignedIn();
+      if (!signedIn) {
+        setCreating(false);
+        return;
+      }
       const data = await fetchWithAuth<CreateResponse>("/api/payment/create", {
         method: "POST",
         body: JSON.stringify({

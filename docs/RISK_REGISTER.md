@@ -33,6 +33,7 @@
 | R-020 | Local history chứa câu hỏi Tarot nhạy cảm và có thể bị người dùng chung thiết bị xem | Privacy/Tarot | High | Mitigated | User/Codex | Chỉ lưu tối đa 15 phiên trên browser; không lưu profile/token/payment; disclosure rõ không cloud sync; có xóa từng phiên/toàn bộ; Zod + try/catch storage |
 | R-021 | Chế độ ép combo Tarot bị bật nhầm trên production hoặc bị lợi dụng như kết quả thật | Tarot/Security | High | Mitigated | User/Codex | Chỉ nhận trigger `Turniodev`; gate theo môi trường ở cả Next.js và Worker; chặn hostname production; gắn nhãn “Chế độ kiểm thử”; production flag luôn false |
 | R-022 | Thư viện combo bị bulk scrape dù KB không nằm trong static bundle | Tarot/KB/Security | High | Mitigated | User/Codex | Firebase Auth; quota user/IP; metadata 15 mục/trang; detail lazy-load từng combo; Zod/ID allowlist; không trả raw index/path; theo dõi traffic và siết quota/WAF trước production |
+| R-023 | Khách có thể xóa phiên Anonymous để né quota Tarot 3 lượt/ngày | Tarot/Abuse | Medium | Open | User/Codex | Firestore transaction chặn vượt quota theo UID; trước production bổ sung Firebase App Check và rate limit/WAF theo IP/device ở edge |
 
 ## 3. Review cadence
 

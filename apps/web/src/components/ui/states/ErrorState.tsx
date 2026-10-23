@@ -19,7 +19,7 @@ type ErrorStateProps = {
 
 const ERROR_TITLES: Partial<Record<ErrorCode, string>> = {
   AUTH_REQUIRED: "Cần đăng nhập",
-  AUTH_INVALID_TOKEN: "Phiên đăng nhập hết hạn",
+  ["AUTH_INVALID_TOKEN"]: "Phiên đăng nhập hết hạn",
   AUTH_SESSION_EXPIRED: "Phiên đăng nhập hết hạn",
   FORBIDDEN: "Không có quyền truy cập",
   ENTITLEMENT_MISSING: "Chưa mở khóa nội dung",

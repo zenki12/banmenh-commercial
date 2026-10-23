@@ -44,6 +44,10 @@ service cloud.firestore {
       allow write: if false; // server-only via admin SDK
     }
 
+    match /tarot_daily_usage/{usageId} {
+      allow read, write: if false;
+    }
+
     // Deny all other paths.
     match /{document=**} {
       allow read, write: if false;

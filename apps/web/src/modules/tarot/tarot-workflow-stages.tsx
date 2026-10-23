@@ -239,13 +239,19 @@ export function QuestionView({
 }
 
 export function SpreadSelectView({
+  hasPlan,
   onBack,
   onContinue,
+  onLockedSpread,
+  quotaRemaining,
   setSpread,
   spread,
 }: {
+  hasPlan: boolean;
   onBack: () => void;
   onContinue: () => void;
+  onLockedSpread: () => void;
+  quotaRemaining: number | null;
   setSpread: (value: Spread) => void;
   spread: Spread;
 }) {
@@ -261,17 +267,27 @@ export function SpreadSelectView({
         </p>
       </Card>
 
+      <p className="rounded-xl border border-[var(--bm-border-subtle)] bg-[var(--bm-bg-glass)] p-4 text-sm font-bold text-[var(--bm-text-soft)]">
+        {hasPlan
+          ? "Gói Tarot đang hoạt động: không giới hạn lượt và đã mở toàn bộ trải bài VIP."
+          : `Gói miễn phí: còn ${quotaRemaining ?? 3}/3 lượt hôm nay. Trải bài từ 5 lá yêu cầu nâng cấp.`}
+      </p>
+
       <div className="tarot-spread-grid">
-        {SPREAD_OPTIONS.map((item) => (
+        {SPREAD_OPTIONS.map((item) => {
+          const locked = item.value > 3 && !hasPlan;
+          return (
           <SpreadOption
             active={item.value === spread}
             hint={item.hint}
             label={item.label}
+            locked={locked}
             key={item.value}
             value={item.value}
-            onClick={() => setSpread(item.value)}
+            onClick={() => locked ? onLockedSpread() : setSpread(item.value)}
           />
-        ))}
+          );
+        })}
       </div>
 
       <div className="tarot-stage-actions">

@@ -45,6 +45,8 @@
 | `GEMINI_API_KEY` | Next.js server | Yes | Khóa gọi Gemini cho luận giải Tarot; tuyệt đối không dùng prefix `NEXT_PUBLIC_` |
 | `TAROT_COMBO_TEST_MODE` | Next.js server + KB Worker | No | Feature flag ép combo khi hồ sơ là `Turniodev`; chỉ bật ở local/dev test, luôn tắt ở production |
 
+`.env.example` dùng `https://banmenh.online` làm giá trị production mẫu cho `NEXT_PUBLIC_APP_URL`; local/dev phải override bằng URL đúng môi trường. Ba biến PayOS là bắt buộc ở backend và không được dùng prefix `NEXT_PUBLIC_`.
+
 ### Gemini AI
 
 - Dev/Test và Production phải dùng khóa Gemini riêng, có quota/billing alert riêng.

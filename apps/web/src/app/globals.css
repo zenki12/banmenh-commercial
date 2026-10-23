@@ -1,8 +1,4 @@
 @import "tailwindcss";
-@import "../styles/tokens.css";
-@import "../styles/numerology-narrative.css";
-@import "../styles/numerology-grid-analysis.css";
-@import "../styles/numerology-result.css";
 
 * {
   box-sizing: border-box;
@@ -103,8 +99,19 @@ select:disabled,
   cursor: not-allowed;
 }
 
-select {
+select,
+input {
   color-scheme: dark;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #120b24 inset !important;
+  -webkit-text-fill-color: #f8fafc !important;
+  caret-color: #f8fafc;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 select:not(:disabled) {

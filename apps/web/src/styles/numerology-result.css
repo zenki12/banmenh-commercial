@@ -1,5 +1,7 @@
 /* === RESULT FREE PREVIEW === */
 
+@reference "../app/globals.css";
+
 .bm-result-overview {
   @apply mb-8 rounded-xl border border-[var(--bm-border-subtle)] bg-[var(--bm-bg-glass)] p-5;
 }

@@ -296,7 +296,12 @@ function parsePyramidPeriodAge(str: string): { start: number | null; end: number
   return { start: null, end: null, isOpen: false };
 }
 
-export function buildPyramidSection(report: NumerologyReport, name: string, narrative?: NarrativeKb): string {
+export function buildPyramidSection(
+  report: NumerologyReport,
+  name: string,
+  narrative?: NarrativeKb,
+  previewOnly = false,
+): string {
   const peaks = report.pyramidPeaks;
   const challenges = report.pyramidChallenges;
   const birthYear = report.input.dobParts.year;
@@ -356,12 +361,13 @@ export function buildPyramidSection(report: NumerologyReport, name: string, narr
   };
 
   const periodsHtml = peaks
+    .slice(0, previewOnly ? 1 : peaks.length)
     .map(
       (peak, index) => `
     <div class="pyramid-period">
       <h3 class="pyramid-period-heading">${buildPeriodHeader(peak.period, index)}</h3>
       ${renderPeak(peak, index)}
-      ${renderChallenge(challenges[index], index)}
+      ${previewOnly ? "" : renderChallenge(challenges[index], index)}
     </div>`,
     )
     .join("");
@@ -374,7 +380,6 @@ export function buildPyramidSection(report: NumerologyReport, name: string, narr
     <p class="nar">Kim Tự Tháp cho thấy <strong>4 giai đoạn</strong> trong cuộc đời bạn — mỗi giai đoạn tương ứng với một đỉnh cao và một thử thách riêng. Đỉnh cao là năng lượng chủ đề bạn nên phát triển trong giai đoạn đó; thử thách là bài học bạn bắt buộc phải vượt qua để tiến lên đỉnh kế tiếp.</p>
     <!-- CHART:pyramid -->
     <div class="pyramid-periods-wrap">${periodsHtml}</div>
-    <h4 class="pyramid-analysis-heading">Phân Tích Chi Tiết Từng Đỉnh Cao</h4>
-    ${peakAnalysisHtml}
+    ${previewOnly ? "" : `<h4 class="pyramid-analysis-heading">Phân Tích Chi Tiết Từng Đỉnh Cao</h4>${peakAnalysisHtml}`}
   `;
 }

@@ -1,4 +1,6 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { useEffect, type ReactNode } from "react";
 import { BackToDashboard } from "./BackToDashboard";
 
 type ContainerWidth = "narrow" | "default" | "wide";
@@ -32,6 +34,22 @@ export function PageShell({
 }: PageShellProps) {
   const hasTopRow = showBack || actions;
   const hasTitleBlock = title || subtitle;
+
+  useEffect(() => {
+    if (!title) return;
+
+    const pageTitle = `${title} | Bản Mệnh`;
+    const syncTitle = () => {
+      if (document.title !== pageTitle) {
+        document.title = pageTitle;
+      }
+    };
+
+    syncTitle();
+    const observer = new MutationObserver(syncTitle);
+    observer.observe(document.head, { childList: true, characterData: true, subtree: true });
+    return () => observer.disconnect();
+  }, [title]);
 
   return (
     <section

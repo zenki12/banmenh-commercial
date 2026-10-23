@@ -310,15 +310,22 @@ const DAILY_CARD_MESSAGES: Record<string, string> = {
 const DAILY_FALLBACK_BODY =
   "Lá bài hôm nay mời bạn quan sát kỹ nhịp cảm xúc và chọn một hành động nhỏ, rõ ràng, thay vì phản ứng quá nhanh.";
 
-export function getDailyCard(dateStr: string): DailyCard {
-  const hash = Array.from(dateStr).reduce((value, char) => {
+export function getDailyCard(dateStr: string, seed?: string): DailyCard {
+  const combinedKey = seed ? `${dateStr}_${seed}` : dateStr;
+  const hash = Array.from(combinedKey).reduce((value, char) => {
     return Math.imul(value ^ char.charCodeAt(0), 16777619) >>> 0;
   }, 2166136261);
   const card = DECK[hash % DECK.length] ?? DECK[0];
+  const orientation: "upright" | "reversed" = (hash >>> 8) % 2 === 0 ? "upright" : "reversed";
+
+  const body = orientation === "reversed"
+    ? card.reversed
+    : (DAILY_CARD_MESSAGES[card.nameVi] ?? card.upright);
+
   return {
     ...card,
-    orientation: (hash >>> 8) % 2 === 0 ? "upright" : "reversed",
-    body: DAILY_CARD_MESSAGES[card.nameVi] ?? DAILY_FALLBACK_BODY,
+    orientation,
+    body,
   };
 }
 

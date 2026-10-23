@@ -8,9 +8,8 @@ import { Button } from "../ui";
 const navLinks = [
   { href: "/than-so-hoc", label: "Thần số học" },
   { href: "/tarot", label: "Tarot" },
-  { href: "/#faq", label: "FAQ" },
-  { href: "/#loi-ich", label: "Lợi ích" },
   { href: "/pricing", label: "Bảng giá" },
+  { href: "/#faq", label: "FAQ" },
   { href: "/legal/privacy", label: "Bảo mật" },
   { href: "/legal/terms", label: "Điều khoản" },
 ];
@@ -48,15 +47,8 @@ function Spinner() {
 }
 
 function AccountArea() {
-  const {
-    user,
-    loading,
-    isAnonymous,
-    error,
-    signInWithGoogle,
-    linkAnonymousToGoogle,
-    signOutFn,
-  } = useAuth();
+  const { user, loading, isAnonymous, signInWithGoogle, linkAnonymousToGoogle, signOutFn } =
+    useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -75,16 +67,9 @@ function AccountArea() {
 
   if (!user) {
     return (
-      <>
-        <Button onClick={signInWithGoogle} size="sm" variant="primary">
-          Đăng nhập
-        </Button>
-        {error ? (
-          <p className="mt-2 max-w-72 text-xs leading-5 text-[var(--bm-danger-soft)]">
-            {error.message}
-          </p>
-        ) : null}
-      </>
+      <Button onClick={signInWithGoogle} size="sm" variant="primary">
+        Đăng nhập
+      </Button>
     );
   }
 
@@ -118,6 +103,23 @@ function AccountArea() {
         onClick={() => setIsOpen((v) => !v)}
         type="button"
       >
+        {user.photoURL ? (
+          <img
+            alt=""
+            className="size-7 rounded-full border border-[var(--bm-border-gold)] object-cover"
+            height={28}
+            referrerPolicy="no-referrer"
+            src={user.photoURL}
+            width={28}
+          />
+        ) : (
+          <span
+            aria-hidden="true"
+            className="grid size-7 place-items-center rounded-full bg-[var(--bm-primary)] text-xs text-white"
+          >
+            {(user.displayName ?? user.email ?? "T").slice(0, 1).toUpperCase()}
+          </span>
+        )}
         <span className="max-w-[120px] truncate">
           {user.displayName ?? user.email ?? "Tài khoản"}
         </span>
@@ -141,7 +143,7 @@ function AccountArea() {
             onClick={() => setIsOpen(false)}
             role="menuitem"
           >
-            Tài khoản
+            Quản lý tài khoản
           </a>
           <button
             className="block w-full px-4 py-2 text-left text-sm text-[var(--bm-text-soft)] hover:bg-[var(--bm-bg-glass)] hover:text-[var(--bm-danger-soft)]"
@@ -171,27 +173,34 @@ export function Header() {
           className="inline-flex items-center gap-2 rounded-full px-2 py-2 text-xl font-black text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--bm-primary-soft)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bm-bg-void)]"
           href="/"
         >
-          <span className="size-2.5 rounded-full bg-[var(--bm-gold-bright)] shadow-[0_0_10px_rgba(253,224,71,0.45)]" />
+          <img
+            alt=""
+            aria-hidden="true"
+            className="size-7 shrink-0 rounded-lg object-cover shadow-[0_0_12px_rgba(253,224,71,0.3)]"
+            height={28}
+            src="/favicon.png"
+            width={28}
+          />
           Bản Mệnh
         </a>
 
         <nav
           aria-label="Điều hướng chính"
-          className="hidden items-center gap-1 rounded-full border border-[var(--bm-border-subtle)] bg-[rgba(255,255,255,0.03)] px-2 py-1 md:flex"
+          className="hidden items-center gap-1 rounded-full border border-[var(--bm-border-subtle)] bg-[rgba(255,255,255,0.03)] px-2 py-1 lg:flex"
         >
           {navLinks.map((link) => (
             <NavLink key={link.href} {...link} />
           ))}
         </nav>
 
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden items-center gap-3 lg:flex">
           <AccountArea />
         </div>
 
         <button
           aria-expanded={mobileOpen}
           aria-label="Mở menu"
-          className="inline-flex size-11 items-center justify-center rounded-full border border-[var(--bm-border-subtle)] bg-[var(--bm-bg-glass)] text-[var(--bm-text-main)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--bm-primary-soft)] md:hidden"
+          className="inline-flex size-11 items-center justify-center rounded-full border border-[var(--bm-border-subtle)] bg-[var(--bm-bg-glass)] text-[var(--bm-text-main)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--bm-primary-soft)] lg:hidden"
           onClick={() => setMobileOpen((v) => !v)}
           type="button"
         >
@@ -202,7 +211,7 @@ export function Header() {
       </div>
 
       {mobileOpen ? (
-        <div className="border-t border-[var(--bm-border-subtle)] bg-[rgba(10,5,20,0.94)] px-5 py-4 md:hidden">
+        <div className="border-t border-[var(--bm-border-subtle)] bg-[rgba(10,5,20,0.94)] px-5 py-4 lg:hidden">
           <nav aria-label="Điều hướng mobile" className="flex flex-col gap-2">
             {navLinks.map((link) => (
               <NavLink key={link.href} {...link} />

@@ -6,10 +6,14 @@ import {
   type User as SharedUser,
 } from "@banmenh/shared";
 import {
+  createUserWithEmailAndPassword,
+  EmailAuthProvider,
   GoogleAuthProvider,
   linkWithPopup,
+  linkWithCredential,
   onAuthStateChanged,
   signInAnonymously,
+  signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
   type User as FirebaseUser,
@@ -27,10 +31,13 @@ type AuthContextValue = {
   loading: boolean;
   isAnonymous: boolean;
   error: AppError | null;
-  signInWithGoogle: () => Promise<void>;
+  signInWithGoogle: () => Promise<boolean>;
+  signInWithEmail: (email: string, password: string) => Promise<boolean>;
+  createAccountWithEmail: (email: string, password: string) => Promise<boolean>;
   signInAnonymouslyFn: () => Promise<void>;
-  linkAnonymousToGoogle: () => Promise<void>;
+  linkAnonymousToGoogle: () => Promise<boolean>;
   signOutFn: () => Promise<void>;
+  clearError: () => void;
 };
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
@@ -42,7 +49,11 @@ function mapFirebaseUser(fbUser: FirebaseUser): SharedUser {
     email: fbUser.email ?? undefined,
     displayName: fbUser.displayName ?? undefined,
     photoURL: fbUser.photoURL ?? undefined,
-    provider: fbUser.isAnonymous ? "anonymous" : "google",
+    provider: fbUser.isAnonymous
+      ? "anonymous"
+      : fbUser.providerData.some((provider) => provider.providerId === "password")
+        ? "email"
+        : "google",
     createdAt: fbUser.metadata.creationTime ?? now,
     updatedAt: now,
   };
@@ -67,7 +78,7 @@ function mapFirebaseError(err: unknown): AppError | null {
   if (code === "auth/operation-not-allowed") {
     return {
       ...createError("AUTH_INVALID_TOKEN"),
-      message: "Google Sign-in chưa được bật trong Firebase Authentication.",
+      message: "Phương thức đăng nhập này chưa được bật trong Firebase Authentication.",
     };
   }
   if (code === "auth/popup-blocked") {
@@ -77,7 +88,24 @@ function mapFirebaseError(err: unknown): AppError | null {
     };
   }
   if (code === "auth/network-request-failed") return createError("NETWORK_ERROR");
-  if (code === "auth/invalid-credential") return createError("AUTH_INVALID_TOKEN");
+  if (code === "auth/invalid-credential") {
+    return { ...createError("AUTH_INVALID_TOKEN"), message: "Email hoặc mật khẩu không đúng." };
+  }
+  if (code === "auth/credential-already-in-use") {
+    return { ...createError("ALREADY_EXISTS"), message: "Email này đã thuộc một tài khoản khác. Vui lòng đăng nhập." };
+  }
+  if (code === "auth/email-already-in-use") {
+    return { ...createError("ALREADY_EXISTS"), message: "Email này đã được đăng ký. Vui lòng đăng nhập." };
+  }
+  if (code === "auth/weak-password") {
+    return { ...createError("INPUT_INVALID"), message: "Mật khẩu cần có ít nhất 8 ký tự." };
+  }
+  if (code === "auth/invalid-email") {
+    return { ...createError("INPUT_INVALID"), message: "Địa chỉ email chưa đúng định dạng." };
+  }
+  if (code === "auth/too-many-requests") {
+    return { ...createError("RATE_LIMITED"), message: "Bạn đã thử quá nhiều lần. Vui lòng đợi một lúc rồi thử lại." };
+  }
   return createError("INTERNAL_ERROR");
 }
 
@@ -122,9 +150,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     try {
       await signInWithPopup(firebaseAuth, createGoogleProvider());
+      return true;
     } catch (err) {
       const mapped = mapFirebaseError(err);
       if (mapped) setError(mapped);
+      return false;
+    }
+  }
+
+  async function signInWithEmail(email: string, password: string) {
+    setError(null);
+    try {
+      await signInWithEmailAndPassword(firebaseAuth, email, password);
+      return true;
+    } catch (err) {
+      const mapped = mapFirebaseError(err);
+      if (mapped) setError(mapped);
+      return false;
+    }
+  }
+
+  async function createAccountWithEmail(email: string, password: string) {
+    setError(null);
+    try {
+      const current = firebaseAuth.currentUser;
+      if (current?.isAnonymous) {
+        await linkWithCredential(current, EmailAuthProvider.credential(email, password));
+      } else {
+        await createUserWithEmailAndPassword(firebaseAuth, email, password);
+      }
+      return true;
+    } catch (err) {
+      const mapped = mapFirebaseError(err);
+      if (mapped) setError(mapped);
+      return false;
     }
   }
 
@@ -143,13 +202,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const current = firebaseAuth.currentUser;
     if (!current) {
       setError(createError("AUTH_REQUIRED"));
-      return;
+      return false;
     }
     try {
       await linkWithPopup(current, createGoogleProvider());
+      return true;
     } catch (err) {
+      const code = (err as { code?: string })?.code;
+      // Nếu tài khoản Google này đã tồn tại trước đó, tự động chuyển sang đăng nhập vào tài khoản đó
+      if (code === "auth/credential-already-in-use" || code === "auth/email-already-in-use") {
+        try {
+          await signInWithPopup(firebaseAuth, createGoogleProvider());
+          return true;
+        } catch (signInErr) {
+          const mapped = mapFirebaseError(signInErr);
+          if (mapped) setError(mapped);
+          return false;
+        }
+      }
       const mapped = mapFirebaseError(err);
       if (mapped) setError(mapped);
+      return false;
     }
   }
 
@@ -171,9 +244,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAnonymous: user?.provider === "anonymous",
         error,
         signInWithGoogle,
+        signInWithEmail,
+        createAccountWithEmail,
         signInAnonymouslyFn,
         linkAnonymousToGoogle,
         signOutFn,
+        clearError: () => setError(null),
       }}
     >
       {children}

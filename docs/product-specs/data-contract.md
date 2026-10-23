@@ -22,7 +22,7 @@ Tài liệu này định nghĩa dữ liệu/API cốt lõi để frontend, backe
   email?: string,
   displayName?: string,
   photoURL?: string,
-  provider: "google" | "anonymous",
+  provider: "google" | "email" | "anonymous",
   createdAt: string,
   updatedAt: string
 }
@@ -142,7 +142,33 @@ Tài liệu này định nghĩa dữ liệu/API cốt lõi để frontend, backe
 }
 ```
 
+### tarot_daily_usage
+
+```ts
+{
+  id: string, // `${userId}_${date}`
+  userId: string,
+  date: string, // YYYY-MM-DD theo Asia/Ho_Chi_Minh
+  count: number,
+  updatedAt: string
+}
+```
+
+- Chỉ backend được đọc/ghi collection này.
+- Mỗi lượt free được tăng trong Firestore transaction để không vượt quota khi request đồng thời.
+
 ## 3. API Contract
+
+### `GET /api/tarot/quota`
+
+- Bắt buộc Firebase Bearer token, chấp nhận tài khoản Anonymous cho hạn mức khách.
+- Trả `hasPlan`, `used`, `limit` và `remaining`; gói Tarot đang hoạt động dùng `null` cho giới hạn không giới hạn.
+
+### `POST /api/tarot/reading`
+
+- Bắt buộc Firebase Bearer token.
+- Backend tăng quota free trong transaction trước khi tạo luận giải.
+- Trả `403 ENTITLEMENT_MISSING` cho spread 5/7/10/12 khi thiếu gói; trả `429 RATE_LIMITED` khi đã dùng 3 lượt free trong ngày.
 
 ### `POST /api/payment/create`
 

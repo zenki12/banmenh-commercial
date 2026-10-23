@@ -154,7 +154,7 @@ export function SummaryDashboard({
             Xem toàn bộ các chỉ số và phần luận giải chuyên sâu trong một báo cáo liền mạch.
           </p>
           <Button className="mt-6" href={detailUrl} size="lg" variant="primary">
-            Xem báo cáo đầy đủ
+            Xem chi tiết luận giải
           </Button>
         </Card>
       ) : null}

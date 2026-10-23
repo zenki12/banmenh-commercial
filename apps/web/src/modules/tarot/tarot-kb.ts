@@ -16,27 +16,27 @@ export function getVariantKey(reversedFlags: boolean[]): string {
 }
 
 export async function fetchCardMeaning(
-  token: string,
+  credential: string,
   cardId: number,
   nicheKey: string,
   isReversed: boolean,
 ): Promise<string> {
   const url = `${TAROT_KB_API}/tarot/card/${cardId}?niche=${nicheKey}&reversed=${isReversed}`;
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${credential}` } });
   if (!res.ok) return "";
   const data = await res.json() as { ok: boolean; text?: string };
   return data.text ?? "";
 }
 
 export async function fetchComboReading(
-  token: string,
+  credential: string,
   cardNames: string[],
   nicheKey: string,
   reversedFlags: boolean[],
 ): Promise<{ found: boolean; title?: string; text: string }> {
   const variant = getVariantKey(reversedFlags);
   const url = `${TAROT_KB_API}/tarot/combo?cards=${encodeURIComponent(cardNames.join(","))}&niche=${nicheKey}&variant=${variant}`;
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${credential}` } });
   if (!res.ok) return { found: false, text: "" };
   const data = await res.json() as { ok: boolean; found: boolean; combo?: { title: string }; text?: string };
   return { found: data.found, title: data.combo?.title, text: data.text ?? "" };

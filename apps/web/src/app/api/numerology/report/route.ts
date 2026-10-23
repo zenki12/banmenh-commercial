@@ -1,8 +1,17 @@
 export const runtime = "nodejs";
 
-import { createError } from "@banmenh/shared";
+import {
+  buildSynthesizedReport,
+  createError,
+  generateReport,
+  type NarrativeKb,
+  type NumerologyKb,
+  type Phase,
+} from "@banmenh/shared";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { checkEntitlement } from "../../../../lib/entitlements/service";
+import { adminAuth } from "../../../../lib/firebase/admin";
 
 const bodySchema = z.object({
   fullName: z.string().trim().min(1).max(200),
@@ -19,10 +28,82 @@ async function readJson(request: Request): Promise<unknown | null> {
   }
 }
 
+function bearerToken(request: Request): string | null {
+  const authorization = request.headers.get("Authorization");
+  return authorization?.startsWith("Bearer ") ? authorization.slice(7) : null;
+}
+
+async function buildDevFallbackReport(input: z.infer<typeof bodySchema>) {
+  const fallbackKb = {
+    meta: { version: "local-dev-fallback" },
+    karmic_debt: {},
+  } as unknown as NumerologyKb;
+  const report = await generateReport(input, fallbackKb);
+  const synthesized = buildSynthesizedReport({
+    report,
+    narrative: {} as NarrativeKb,
+    kb: fallbackKb,
+  });
+  return { ...report, ...synthesized };
+}
+
+const FREE_FULL_SECTIONS = new Set(["1", "2", "3", "4", "11"]);
+const FREE_PARTIAL_SECTIONS = new Set(["5", "6", "23"]);
+
+function redactReportForAccess(report: unknown, unlocked: boolean): unknown {
+  if (!report || typeof report !== "object") return report;
+  const source = report as Record<string, unknown>;
+  if (!Array.isArray(source.phases)) return report;
+
+  const phases = (source.phases as Phase[]).map((phase) => ({
+    ...phase,
+    sections: phase.sections.map((item) => {
+      const { previewHtml, ...section } = item;
+      if (unlocked || FREE_FULL_SECTIONS.has(item.number)) {
+        return { ...section, access: "full" as const };
+      }
+      if (FREE_PARTIAL_SECTIONS.has(item.number)) {
+        return {
+          ...section,
+          access: "partial" as const,
+          html: previewHtml ?? "",
+        };
+      }
+      return {
+        ...section,
+        access: "locked" as const,
+        chartSlot: undefined,
+        html: "",
+      };
+    }),
+  }));
+
+  return { ...source, phases };
+}
+
 export async function POST(request: Request) {
   const parsed = bodySchema.safeParse(await readJson(request));
   if (!parsed.success) {
     return NextResponse.json({ error: createError("VALIDATION_FAILED") }, { status: 400 });
+  }
+
+  const bearer = bearerToken(request);
+  let uid: string | null = null;
+  if (bearer) {
+    try {
+      uid = (await adminAuth.verifyIdToken(bearer)).uid;
+    } catch {
+      return NextResponse.json({ error: createError("AUTH_INVALID_TOKEN") }, { status: 401 });
+    }
+  }
+
+  let unlocked = false;
+  if (uid) {
+    try {
+      unlocked = (await checkEntitlement(uid, "numerology_single_report")).has;
+    } catch (error) {
+      console.warn("[numerology/report] entitlement check failed; serving free preview", error);
+    }
   }
 
   const workerUrl = process.env.KB_WORKER_URL ?? "http://localhost:8787";
@@ -31,7 +112,10 @@ export async function POST(request: Request) {
   const [kbFetchResult] = await Promise.allSettled([
     fetch(`${workerUrl.replace(/\/$/, "")}/numerology/report`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
+      },
       body: JSON.stringify({ ...parsed.data, includeSections: true }),
       signal: controller.signal,
     }),
@@ -39,12 +123,31 @@ export async function POST(request: Request) {
 
   if (kbFetchResult.status === "rejected") {
     clearTimeout(timeout);
-    console.error("[numerology/report] KB fetch failed:", kbFetchResult.reason);
+    console.warn("[numerology/report] KB fetch failed:", kbFetchResult.reason);
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("[numerology/report] Using local dev fallback report (KB worker unreachable)");
+      const report = await buildDevFallbackReport(parsed.data);
+      return NextResponse.json({
+        ok: true,
+        report: redactReportForAccess(report, unlocked),
+        unlocked,
+      });
+    }
     return NextResponse.json({ error: createError("KB_NOT_AVAILABLE") }, { status: 502 });
   }
 
   try {
     const response = kbFetchResult.value;
+
+    if (!response.ok && process.env.NODE_ENV !== "production") {
+      console.warn(`[numerology/report] Using local dev fallback report (worker returned status ${response.status})`);
+      const report = await buildDevFallbackReport(parsed.data);
+      return NextResponse.json({
+        ok: true,
+        report: redactReportForAccess(report, unlocked),
+        unlocked,
+      });
+    }
 
     const text = await response.text();
     let payload: unknown = text;
@@ -74,13 +177,22 @@ export async function POST(request: Request) {
           ? { ...(responsePayload.report as Record<string, unknown>) }
           : responsePayload.report;
       return NextResponse.json(
-        { ...payload, report, unlocked: true, entitlement: null },
+        { ...payload, report: redactReportForAccess(report, unlocked), unlocked },
         { status: response.status },
       );
     }
     return NextResponse.json(payload, { status: response.status });
   } catch (err) {
     console.error("[numerology/report] worker call failed:", err);
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("[numerology/report] Using local dev fallback report (exception in worker call)");
+      const report = await buildDevFallbackReport(parsed.data);
+      return NextResponse.json({
+        ok: true,
+        report: redactReportForAccess(report, unlocked),
+        unlocked,
+      });
+    }
     const code = err instanceof Error && err.name === "AbortError" ? "TIMEOUT" : "KB_NOT_AVAILABLE";
     return NextResponse.json({ error: createError(code) }, { status: code === "TIMEOUT" ? 504 : 502 });
   } finally {

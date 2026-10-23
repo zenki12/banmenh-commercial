@@ -2,6 +2,10 @@ import type { Metadata, Viewport } from "next";
 import { Be_Vietnam_Pro, Lora } from "next/font/google";
 import { BackHomeBar, Footer, GalaxyBackgroundLazy, Header } from "../components/layout";
 import { AuthProvider } from "../lib/auth";
+import "../styles/tokens.css";
+import "../styles/numerology-narrative.css";
+import "../styles/numerology-grid-analysis.css";
+import "../styles/numerology-result.css";
 import "./globals.css";
 
 const beVietnam = Be_Vietnam_Pro({
@@ -19,8 +23,15 @@ const lora = Lora({
 });
 
 export const metadata: Metadata = {
-  title: "Bản Mệnh",
+  title: {
+    default: "Bản Mệnh — Nền tảng tra cứu huyền học",
+    template: "%s | Bản Mệnh",
+  },
   description: "Nền tảng tra cứu huyền học module hóa.",
+  icons: {
+    icon: "/favicon.png",
+    apple: "/favicon.png",
+  },
 };
 
 export const viewport: Viewport = {

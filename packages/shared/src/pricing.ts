@@ -52,12 +52,13 @@ export const PRODUCTS = [
     module: "tarot",
     name: "Tarot 1 tháng",
     description:
-      "Truy cập trải bài 1 lá và 3 lá không giới hạn trong 30 ngày.",
+      "Mở toàn bộ trải bài Tarot và không giới hạn lượt trong 30 ngày.",
     priceVnd: 29000,
     tier: "subscription",
     features: [
-      "Trải bài 1 lá và 3 lá không giới hạn",
-      "Lưu lịch sử trong tài khoản",
+      "Không giới hạn trải bài 1 lá và 3 lá",
+      "Mở trải bài VIP 5, 7, 10 và 12 lá",
+      "Lưu tối đa 15 phiên trên thiết bị",
       "Hiệu lực 30 ngày",
     ],
   },
@@ -66,12 +67,13 @@ export const PRODUCTS = [
     module: "tarot",
     name: "Tarot 3 tháng",
     description:
-      "Truy cập trải bài 1 lá và 3 lá không giới hạn trong 90 ngày, tiết kiệm 9%.",
+      "Mở toàn bộ trải bài Tarot trong 90 ngày, không giới hạn lượt và tiết kiệm 9%.",
     priceVnd: 79000,
     tier: "subscription",
     features: [
-      "Trải bài 1 lá và 3 lá không giới hạn",
-      "Lưu lịch sử trong tài khoản",
+      "Không giới hạn trải bài 1 lá và 3 lá",
+      "Mở trải bài VIP 5, 7, 10 và 12 lá",
+      "Lưu tối đa 15 phiên trên thiết bị",
       "Hiệu lực 90 ngày — tiết kiệm 8.000₫ (~9%) so với mua từng tháng",
       "Reminder qua Telegram khi sắp hết hạn",
     ],

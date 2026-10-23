@@ -132,7 +132,7 @@ export default function AccountPage() {
               ) : null}
             </div>
             <span className="w-fit rounded-full border border-[var(--bm-border-subtle)] bg-[var(--bm-bg-glass)] px-3 py-1 text-xs font-bold text-[var(--bm-gold-bright)]">
-              {user.provider === "google" ? "Google" : "Khách"}
+              {user.provider === "google" ? "Google" : user.provider === "email" ? "Email" : "Khách"}
             </span>
           </div>
         </Card>

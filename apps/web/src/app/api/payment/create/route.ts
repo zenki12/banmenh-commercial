@@ -66,6 +66,12 @@ export async function POST(request: Request) {
   let uid: string;
   try {
     const decoded = await adminAuth.verifyIdToken(bearer);
+    if (decoded.firebase?.sign_in_provider === "anonymous") {
+      return NextResponse.json(
+        { error: createError("AUTH_REQUIRED") },
+        { status: 401 },
+      );
+    }
     uid = decoded.uid;
   } catch {
     return NextResponse.json(

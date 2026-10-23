@@ -77,7 +77,7 @@ export async function ensureUser(
     email?: string | null;
     displayName?: string | null;
     photoURL?: string | null;
-    provider: "google" | "anonymous";
+    provider: "google" | "email" | "anonymous";
   },
   _ctx: StorageContext,
 ): Promise<void> {
@@ -98,6 +98,7 @@ export async function ensureUser(
     await ref.set(toFirestoreDoc(data));
   } else {
     const patch: Record<string, unknown> = { updatedAt: now };
+    patch.provider = profile.provider;
     if (profile.email) patch.email = profile.email;
     if (profile.displayName) patch.displayName = profile.displayName;
     if (profile.photoURL) patch.photoURL = profile.photoURL;

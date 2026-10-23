@@ -59,7 +59,9 @@ export async function POST(request: Request) {
         provider:
           decoded.firebase?.sign_in_provider === "anonymous"
             ? "anonymous"
-            : "google",
+            : decoded.firebase?.sign_in_provider === "password"
+              ? "email"
+              : "google",
       },
       { userId: decoded.uid },
     );
@@ -73,7 +75,7 @@ export async function POST(request: Request) {
     displayName: decoded.name ?? null,
     photoURL: decoded.picture ?? null,
     provider: decoded.firebase?.sign_in_provider ?? null,
-    isAnonymous: !decoded.email,
+    isAnonymous: decoded.firebase?.sign_in_provider === "anonymous",
     emailVerified: decoded.email_verified ?? false,
   });
 }

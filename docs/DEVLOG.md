@@ -11,6 +11,204 @@
 
 ---
 
+## 2026-10-23 16:10 +07 — T-BRAND-FAVICON-TITLES đồng bộ logo Header
+
+Loại: Brand asset + UI
+
+Đã làm:
+
+- Thay chấm vàng trước wordmark `Bản Mệnh` trong Header bằng chính asset `/favicon.png`.
+- Cố định kích thước brand mark ở 28x28px, bo góc và giữ ảnh ở trạng thái trang trí để không tạo nội dung lặp cho trình đọc màn hình.
+- Kiểm tra trực quan ở viewport desktop 1440px và mobile 375px: logo rõ, cân chữ và không gây tràn ngang.
+
+Không làm:
+
+- Không chỉnh sửa nội dung ảnh favicon nguồn, không thêm dependency và không thay đổi logic Header/Auth.
+
+Kiểm tra:
+
+- `npm run typecheck` — pass.
+- `npm run lint` — pass.
+- `npm run build` — pass sau khi dừng dev server cục bộ chiếm bộ nhớ; lần chạy đầu compile thành công nhưng worker thu thập page data hết heap.
+- `git diff --check` — pass.
+
+Rủi ro còn lại:
+
+- Task giữ trạng thái `Review` theo quy trình, chờ code review độc lập trước khi chuyển `Done`.
+
+---
+
+## 2026-10-23 15:51 +07 — T-BRAND-FAVICON-TITLES cập nhật nhận diện tab trình duyệt
+
+Loại: Brand asset + Metadata + UI
+
+Đã làm:
+
+- Sao chép nguyên vẹn `favicon.png` từ root vào `apps/web/public/favicon.png`, `apps/web/src/app/icon.png` và `apps/web/src/app/apple-icon.png`; xác nhận cùng SHA-256 với nguồn.
+- Cập nhật root metadata với title mặc định `Bản Mệnh — Nền tảng tra cứu huyền học`, template `%s | Bản Mệnh`, description và icon/Apple icon.
+- Thêm metadata `Tarot` và `Thần số học` cho hai Server Component tương ứng.
+- Chuyển `PageShell` thành Client Component và đồng bộ `document.title` theo prop `title`.
+- Bổ sung `MutationObserver` gọn trong effect vì Next.js 16 có thể stream root metadata sau hydration và ghi đè title của trang client; observer tự ngắt khi component unmount.
+
+Không làm:
+
+- Không thêm dependency, không chỉnh sửa nội dung hoặc tái nén asset favicon nguồn.
+- Không thay đổi layout hiển thị, navigation hoặc logic nghiệp vụ các route.
+
+File chính đã sửa/tạo:
+
+- `apps/web/public/favicon.png`
+- `apps/web/src/app/icon.png`
+- `apps/web/src/app/apple-icon.png`
+- `apps/web/src/app/layout.tsx`
+- `apps/web/src/components/layout/PageShell.tsx`
+- `apps/web/src/app/tarot/page.tsx`
+- `apps/web/src/app/than-so-hoc/page.tsx`
+
+Kiểm thử:
+
+- `npm run typecheck` — pass.
+- `npm run lint` — pass.
+- `npm run build` — pass; sinh route `/icon.png` và `/apple-icon.png`.
+- `git diff --check` — pass.
+- Browser smoke Edge headless — pass: `/`, `/than-so-hoc`, `/tarot`, `/pricing`, `/account` có title chính xác; không có page error.
+- `/favicon.png` trả HTTP thành công với `content-type: image/png`; icon và Apple touch icon đều trỏ đúng `/favicon.png`.
+
+Rủi ro còn lại:
+
+- Asset nguồn có dung lượng khoảng 2,87 MB. Task yêu cầu giữ nguyên file; có thể tạo task tối ưu derivative favicon sau nếu cần giảm tải production.
+
+## 2026-10-23 15:28 +07 — T-AUTH-SIMPLIFY tinh gọn Google Auth 1-click
+
+Loại: Auth + UI
+
+Đã làm:
+
+- Đối chiếu Header của `banmenh v2` và khôi phục luồng đăng nhập trực tiếp: nút `Đăng nhập` gọi ngay `signInWithGoogle`, không mở hộp thoại trung gian.
+- Với tài khoản ẩn danh, Header hiển thị huy hiệu `Khách` và nút `Liên kết Google` gọi trực tiếp `linkAnonymousToGoogle`.
+- Loại bỏ `AuthDialog` và toàn bộ tham chiếu/state liên quan khỏi Header.
+- Xác nhận `AuthProvider` đã xử lý `auth/credential-already-in-use` và `auth/email-already-in-use` bằng cách chuyển sang `signInWithPopup` cho tài khoản Google có sẵn.
+- Giữ nguyên `onAuthStateChanged` và `syncSessionToFirestore`, vì vậy token vẫn được đồng bộ tới `/api/auth/session` sau khi trạng thái Firebase thay đổi.
+
+Không làm:
+
+- Không thêm dependency, không thay API session, payment hoặc entitlement.
+- Không đăng nhập bằng tài khoản Gmail thật trong môi trường automation; bước chọn tài khoản cần Firebase dev credentials và thao tác tương tác khi review.
+
+File chính đã sửa:
+
+- `apps/web/src/components/layout/Header.tsx`
+- Xóa `apps/web/src/components/auth/AuthDialog.tsx`
+- `docs/TASK_REGISTRY.md`
+- `docs/DEVLOG.md`
+
+Kiểm thử:
+
+- `npm run typecheck` — pass.
+- `npm run lint` — pass.
+- `npm run build` — pass.
+- Visual smoke Edge headless — Header desktop 1440×1000 và mobile 375×812 render đúng, nút `Đăng nhập` hiển thị gọn.
+- Source audit — không còn tham chiếu `AuthDialog`, `authOpen` hoặc copy `Đăng nhập Google / Email` trong `apps/web/src`.
+
+Rủi ro còn lại:
+
+- Cần xác nhận popup Google, chọn tài khoản và avatar/tên sau đăng nhập bằng Firebase dev credentials trong lượt review tích hợp.
+
+## 2026-10-23 14:35 +07 — T-COMM-NUMEROLOGY-PAYWALL chuyển sang in-line teaser paywall
+
+Loại: Numerology + Commerce + UI + Security
+
+Đã làm:
+
+- Khôi phục trang Tổng quan cho Free/VIP với đủ 8 chỉ số cốt lõi, 3 biểu đồ và một CTA dẫn sang trang Chi tiết; bỏ thẻ hard paywall xen giữa nội dung.
+- Mở route Chi tiết cho mọi người dùng và thêm `LockedTeaser` dùng token thiết kế, giá từ shared pricing và liên kết PayOS giữ nguyên query báo cáo.
+- Áp dụng phân quyền theo từng mục: mở Đường Đời/Sứ Mệnh; chỉ mở chặng đầu Chu kỳ Đường Đời, Đỉnh 1 Kim Tự Tháp và phần số hiện diện của Lưới Ngày Sinh; khóa các luận giải chuyên sâu còn lại.
+- Tạo HTML preview ngay trong synthesizer và redaction tại API sau bước kiểm tra entitlement. Mục khóa được trả `html: ""`, vì vậy nội dung VIP không bị gửi xuống client Free.
+- Giữ nguyên Pyramid SVG, Birth Grid, Career Bars và toàn bộ nội dung gốc khi `unlocked === true`.
+
+Không làm:
+
+- Không thêm dependency, không thay pricing, Firestore rules hoặc payment transaction.
+- Không đổi số thứ tự dữ liệu hiện có: báo cáo thực tế có 31 mục; Birth Grid là mục 23, còn Nợ Nghiệp mục 22 được khóa đúng ý nghĩa nghiệp vụ.
+
+File chính đã sửa:
+
+- `apps/web/src/components/numerology/result/SummaryDashboard.tsx`
+- `apps/web/src/app/than-so-hoc/result/details/page.tsx`
+- `apps/web/src/components/numerology/result/FullReport.tsx`
+- `apps/web/src/app/api/numerology/report/route.ts`
+- `packages/shared/src/numerology/synthesizer.ts`
+- `packages/shared/src/numerology/narrative/cycle.ts`
+- `packages/shared/src/numerology/narrative/pyramid.ts`
+
+Kiểm thử:
+
+- `npm run typecheck` — pass.
+- `npm run lint` — pass.
+- `npm run build` — pass.
+- `git diff --check` — pass.
+- API smoke Free — pass: 4 phase; mục 5 chỉ có 1 chặng; mục 6 không chứa Thử thách; mục 23 không chứa phân tích Mũi tên; mục 7/12/22/24 có HTML rỗng.
+- Visual smoke bằng Edge headless — pass ở desktop 1440×1000 và mobile 375×812; Tổng quan có đủ 8 chỉ số/3 biểu đồ, báo cáo dài và teaser render ổn.
+
+Rủi ro còn lại:
+
+- Task giữ trạng thái `Review` để chờ code review độc lập và kiểm thử entitlement VIP bằng Firebase dev credentials trước khi chuyển `Done`.
+
+## 2026-10-23 10:39 +07 — T-COMM-B2C-1-FIX xử lý finding Auth và CSS
+
+Loại: Code review fix
+
+- Sửa nhãn provider Email trên `/account`, không còn hiển thị nhầm là tài khoản khách.
+- Session API xác định `isAnonymous` bằng `firebase.sign_in_provider === "anonymous"` thay vì suy luận từ email.
+- Di chuyển `@reference "../app/globals.css"` lên đầu hai stylesheet Numerology theo chuẩn Tailwind CSS v4.
+- Không thêm dependency và không thay đổi pricing, Firestore rules hoặc payment transaction.
+- Kiểm thử: `npm run typecheck`, `npm run lint`, `npm run build` và `git diff --check` — pass.
+
+## 2026-10-23 10:21 +07 — T-COMM-B2C-1 hoàn thiện Commercial Edition auth, paywall và PayOS
+
+Loại: Auth + Commerce + Payment + Security + UI
+
+Đã làm:
+
+- Mở đầy đủ navigation thương mại trên Header; thêm hộp thoại đăng nhập Google/Email, đăng ký Email, liên kết tài khoản Anonymous và avatar/menu quản lý tài khoản.
+- Chuyển paywall Thần số học sang kiểm tra entitlement server-side; bản free chỉ hiện Đường đời/Sứ mệnh, khóa các biểu đồ và luận giải chuyên sâu với CTA lấy giá từ shared pricing.
+- Hoàn thiện route thanh toán Tarot, callback success/cancel và buộc tài khoản Google/Email trước khi tạo đơn PayOS; amount và entitlement vẫn do backend/webhook quyết định.
+- Thêm quota Tarot 3 lượt/ngày bằng Firestore transaction; API từ chối spread 5/7/10/12 khi thiếu gói và UI hiển thị số lượt còn lại cùng popup nâng cấp PayOS.
+- Đồng bộ provider Email, contract `tarot_daily_usage`, Firestore rules server-only, mô tả quyền lợi gói và `NEXT_PUBLIC_APP_URL=https://banmenh.online` trong `.env.example`.
+- Tách import CSS toàn cục tương thích Turbopack/Tailwind v4 và thêm `@reference` để giữ các utility tùy biến khi build độc lập.
+
+Không làm:
+
+- Không deploy production, không cấu hình secret thật, không đổi stack.
+- Không chạy giao dịch PayOS thật hoặc đăng nhập Firebase thật vì môi trường hiện tại chưa có dev credentials được cấp cho phiên kiểm thử.
+- Không chuyển lịch sử Tarot local lên cloud; contract hiện hành vẫn giới hạn 15 phiên trên thiết bị và đã sửa copy gói để không hứa quá quyền lợi thực tế.
+
+File chính đã sửa/tạo:
+
+- `apps/web/src/components/layout/Header.tsx`, `apps/web/src/components/auth/AuthDialog.tsx`, `apps/web/src/lib/auth/AuthProvider.tsx`
+- `apps/web/src/app/api/numerology/report/route.ts`, `apps/web/src/components/numerology/result/SummaryDashboard.tsx`, các trang kết quả Thần số học
+- `apps/web/src/app/api/tarot/reading/route.ts`, `apps/web/src/app/api/tarot/quota/route.ts`, `apps/web/src/lib/tarot/quota.ts`
+- `apps/web/src/modules/tarot/TarotExperience.tsx`, `tarot-workflow-stages.tsx`, `tarot-upgrade-modal.tsx`
+- `apps/web/src/app/tarot/payment/**`, payment setup/success và `apps/web/src/app/api/payment/create/route.ts`
+- `packages/shared/src/pricing.ts`, schema user, `infra/firestore.rules`, `.env.example` và tài liệu contract/risk/environment liên quan
+
+Kiểm thử:
+
+- `npm run typecheck` — pass.
+- `npm run lint` — pass.
+- `npm run build` — pass; sinh đủ `/api/tarot/quota`, `/tarot/payment`, success/cancel và các route thương mại.
+- `npm run security:smoke` — pass; không phát hiện secret phổ biến hoặc KB leak trong frontend/static.
+- `npm run payos:test-sig` — pass.
+- Visual smoke bằng Edge headless: `/` ở 1440×1000, `/pricing` và `/tarot/payment` ở 375×812 đều render, không có lỗi runtime trong dev log.
+- `npm run qa:responsive-audit` — fail do smoke script vẫn khóa selector Header cũ ở breakpoint `md` trong khi Header thương mại chủ động chuyển sang `lg` để đủ chỗ cho 6 nav item; hai finding Footer/Home Hub cũng là baseline ngoài scope. Kiểm tra trực quan 375px đã pass.
+- `npm run check` — typecheck/lint pass nhưng chuỗi lệnh dừng ở `kb:test-diacritics` vì workspace không có file gitignored `kb-private/numerology/narrative.json`; build và security smoke sau đó đã được chạy riêng và pass.
+- `git diff --check` — pass.
+
+Rủi ro còn lại:
+
+- Cần code review độc lập theo workflow và test tích hợp Google/Email, QR PayOS, webhook/entitlement bằng Firebase + PayOS dev credentials trước khi chuyển task sang `Done`.
+- Anonymous UID có thể bị reset để né quota; đã ghi R-023, cần App Check và rate limit/WAF theo IP/device trước production.
+
 ## 2026-10-22 10:39 +07 — T-0719 hoàn tất trải nghiệm bộ bài 3D, xào và xòe bài
 
 Loại: UI + Interaction + Accessibility + Responsive + E2E

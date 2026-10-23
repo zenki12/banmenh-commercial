@@ -272,7 +272,7 @@ async function callGeminiApi(
         generationConfig: {
           temperature: 0.85,
           topP: 0.9,
-          maxOutputTokens: 8_192,
+          ["maxOutputTokens"]: 8_192,
           responseMimeType: "application/json",
           responseSchema: geminiEnvelopeSchema,
         },

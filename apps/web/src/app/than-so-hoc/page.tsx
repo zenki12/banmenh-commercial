@@ -1,8 +1,13 @@
 import { getProductsByModule } from "@banmenh/shared";
+import type { Metadata } from "next";
 import { MysticStyles } from "../../components/homepage-v2/MysticStyles";
 import { InputForm } from "../../components/numerology/InputForm";
 import { NumerologyAuthNotice } from "../../components/numerology/NumerologyAuthNotice";
 import { Card, ProductCard } from "../../components/ui";
+
+export const metadata: Metadata = {
+  title: "Thần số học",
+};
 
 const numerologyMetrics = [
   {

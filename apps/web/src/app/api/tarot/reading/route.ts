@@ -17,6 +17,7 @@ import {
   requiresImmediateSafetyFallback,
 } from "../../../../lib/tarot/gemini";
 import { tarotRateLimitResponse } from "../../../../lib/tarot/rate-limit";
+import { consumeTarotReading } from "../../../../lib/tarot/quota";
 import { getLocalTarotCardAspectMeaning } from "../../../../lib/tarot/local-tarot-kb";
 
 const DISCLOSURE =
@@ -89,13 +90,14 @@ async function enrichWithPrivateKb(
 
 export async function POST(request: Request) {
   const bearer = bearerToken(request);
-  let uid: string = "guest";
-  if (bearer) {
-    try {
-      uid = (await adminAuth.verifyIdToken(bearer)).uid;
-    } catch {
-      uid = "guest";
-    }
+  if (!bearer) {
+    return NextResponse.json({ error: createError("AUTH_REQUIRED") }, { status: 401 });
+  }
+  let uid: string;
+  try {
+    uid = (await adminAuth.verifyIdToken(bearer)).uid;
+  } catch {
+    return NextResponse.json({ error: createError("AUTH_INVALID_TOKEN") }, { status: 401 });
   }
 
   const rateLimitError = tarotRateLimitResponse(request, uid);
@@ -111,6 +113,25 @@ export async function POST(request: Request) {
   const parsed = tarotAiReadingRequestSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: createError("VALIDATION_FAILED") }, { status: 400 });
+  }
+
+  const access = await consumeTarotReading(uid, parsed.data.spread);
+  if (!access.allowed) {
+    const code = access.reason === "plan_required" ? "ENTITLEMENT_MISSING" : "RATE_LIMITED";
+    const message = access.reason === "plan_required"
+      ? "Trải bài 5, 7, 10 và 12 lá yêu cầu gói Tarot đang hoạt động."
+      : "Bạn đã dùng hết 3 lượt trải bài miễn phí hôm nay.";
+    return NextResponse.json({
+      error: {
+        ...createError(code),
+        message,
+        details: {
+          reason: access.reason ?? "daily_limit",
+          used: access.quota.used,
+          limit: access.quota.limit ?? -1,
+        },
+      },
+    }, { status: access.reason === "plan_required" ? 403 : 429 });
   }
 
   const input = await enrichWithPrivateKb(parsed.data, bearer);

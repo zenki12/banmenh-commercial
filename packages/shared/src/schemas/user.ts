@@ -4,7 +4,7 @@
 import { z } from "zod";
 import { emailSchema, idSchema, timestampSchema } from "./common";
 
-export const userProviderSchema = z.enum(["google", "anonymous"]);
+export const userProviderSchema = z.enum(["google", "email", "anonymous"]);
 export type UserProvider = z.infer<typeof userProviderSchema>;
 
 export const userSchema = z.object({

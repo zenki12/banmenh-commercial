@@ -61,6 +61,7 @@ function SuccessPanel({
     searchParams.get("fullName") ||
     user?.displayName ||
     "Hồ sơ của bạn";
+  const isTarot = module === "tarot";
 
   return (
     <Card padding="lg" variant="report">
@@ -74,7 +75,8 @@ function SuccessPanel({
         <div>
           <h2>Thanh toán thành công</h2>
           <p className="mt-3 text-[var(--bm-text-soft)]">
-            Quyền truy cập báo cáo của <strong className="text-[var(--bm-text-main)]">{displayName}</strong>{" "}
+            {isTarot ? "Gói Tarot" : "Quyền truy cập báo cáo của"}{" "}
+            {!isTarot ? <strong className="text-[var(--bm-text-main)]">{displayName}</strong> : null}{" "}
             đã được kích hoạt.
           </p>
         </div>
@@ -95,7 +97,7 @@ function SuccessPanel({
         </div>
         <div className="grid w-full gap-3 sm:grid-cols-2">
           <Button href={reportHref} fullWidth variant="primary">
-            {hasInput ? "Xem báo cáo đầy đủ" : "Nhập thông tin để tạo báo cáo"}
+            {isTarot ? "Bắt đầu trải bài" : hasInput ? "Xem báo cáo đầy đủ" : "Nhập thông tin để tạo báo cáo"}
           </Button>
           <Button href="/account" fullWidth variant="secondary">
             Vào tài khoản
