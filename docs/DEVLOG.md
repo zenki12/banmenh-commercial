@@ -11,6 +11,34 @@
 
 ---
 
+## 2026-10-23 22:44 +07 — Production deploy commit d0c5d7f
+
+Loại: Production deployment
+
+Đã làm:
+
+- Deploy artifact sạch từ commit `d0c5d7f` lên Vercel project `zenkis-projects-f69ce370/banmenh-commercial`.
+- Deployment `dpl_9Hx2mekgf7WpjzmLzqXiV29Fz7ss` đạt trạng thái `Ready` và được alias tới `https://banmenh.online`.
+- Không đưa các thay đổi chưa commit trong worktree vào artifact production.
+
+Kiểm tra sau deploy:
+
+- `/`, `/than-so-hoc`, `/tarot`, `/pricing`, `/account` — HTTP 200.
+- `/api/numerology/report` — HTTP 200; tài khoản Free nhận đủ 31 mục với 10 full, 3 partial, 18 locked và không có HTML trong mục locked.
+- Admin API không token trả HTTP 500 với thông báo chưa cấu hình thay vì HTTP 401 do production chưa có `ADMIN_TOKEN`.
+
+Rủi ro/cấu hình còn thiếu:
+
+- Vercel Production chưa có `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY`, `ADMIN_TOKEN`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` và `KB_WORKER_URL`.
+- Numerology Free đang dùng local fallback khi KB Worker không khả dụng; payment PayOS, admin API và Telegram chưa thể nghiệm thu production cho tới khi secret/config được bổ sung rồi redeploy.
+- Không ghi giá trị secret vào repo hoặc DEVLOG.
+
+Rollback:
+
+- Deployment production trước: `dpl_5XVyx5J3DkerooVbL9KvqmQBtBYN`.
+
+---
+
 ## 2026-10-23 18:29 +07 — T-NUMEROLOGY-PAYWALL-TEASER-RHYTHM hoàn thiện nhịp teaser
 
 Loại: Numerology access control + Conversion UI

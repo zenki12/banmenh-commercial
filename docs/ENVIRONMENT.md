@@ -120,3 +120,15 @@ Còn thiếu:
 - File thiết kế giao diện: đã có, cần user cung cấp đường dẫn khi bắt đầu UI implementation.
 - KB Thần số học: đã có, phải import vào private storage/API layer, không đưa vào frontend/static asset.
 - KB Tarot: đã có, sẽ dùng cho module Tarot rebuild, chỉ dùng KB do user cung cấp.
+
+## 11. Deployment History
+
+### 2026-10-23 22:44 +07 — Production
+
+- Commit: `d0c5d7f`
+- Vercel deployment: `dpl_9Hx2mekgf7WpjzmLzqXiV29Fz7ss`
+- URL: `https://banmenh-commercial-erigz3oca-zenkis-projects-f69ce370.vercel.app`
+- Production alias: `https://banmenh.online`
+- Status: `Ready`
+- Rollback deployment: `dpl_5XVyx5J3DkerooVbL9KvqmQBtBYN`
+- Known gap: production còn thiếu các biến `PAYOS_*`, `ADMIN_TOKEN`, Telegram và `KB_WORKER_URL`; chưa nghiệm thu payment/admin/alert.
