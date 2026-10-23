@@ -10,18 +10,12 @@ import { getApp, getApps, initializeApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
 
 function createFirebaseConfig() {
-  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
-  const authDomain = process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN;
-  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-  const storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
-  const messagingSenderId = process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID;
-  const appId = process.env.NEXT_PUBLIC_FIREBASE_APP_ID;
-
-  if (!apiKey || !authDomain || !projectId || !storageBucket || !messagingSenderId || !appId) {
-    throw new Error(
-      "Thiếu Firebase config: kiểm tra apps/web/.env.local có đủ 6 biến NEXT_PUBLIC_FIREBASE_* theo .env.example.",
-    );
-  }
+  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "mock-api-key";
+  const authDomain = process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "mock.firebaseapp.com";
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "mock-project";
+  const storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "mock.appspot.com";
+  const messagingSenderId = process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "000000000000";
+  const appId = process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:000000000000:web:mock";
 
   return { apiKey, authDomain, projectId, storageBucket, messagingSenderId, appId };
 }

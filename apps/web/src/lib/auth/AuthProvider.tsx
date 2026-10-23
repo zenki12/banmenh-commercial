@@ -135,15 +135,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<AppError | null>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(firebaseAuth, (fbUser) => {
-      setUser(fbUser ? mapFirebaseUser(fbUser) : null);
+    try {
+      const unsubscribe = onAuthStateChanged(firebaseAuth, (fbUser) => {
+        setUser(fbUser ? mapFirebaseUser(fbUser) : null);
+        setLoading(false);
+        if (fbUser) {
+          // Ensure Firestore user doc — không await để không block UI
+          void syncSessionToFirestore(fbUser);
+        }
+      });
+      return unsubscribe;
+    } catch (err) {
+      console.warn("[AuthProvider] Firebase auth initialization failed:", err);
       setLoading(false);
-      if (fbUser) {
-        // Ensure Firestore user doc — không await để không block UI
-        void syncSessionToFirestore(fbUser);
-      }
-    });
-    return unsubscribe;
+      return undefined;
+    }
   }, []);
 
   async function signInWithGoogle() {

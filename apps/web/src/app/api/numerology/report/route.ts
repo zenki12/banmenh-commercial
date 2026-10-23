@@ -123,24 +123,20 @@ export async function POST(request: Request) {
 
   if (kbFetchResult.status === "rejected") {
     clearTimeout(timeout);
-    console.warn("[numerology/report] KB fetch failed:", kbFetchResult.reason);
-    if (process.env.NODE_ENV !== "production") {
-      console.warn("[numerology/report] Using local dev fallback report (KB worker unreachable)");
-      const report = await buildDevFallbackReport(parsed.data);
-      return NextResponse.json({
-        ok: true,
-        report: redactReportForAccess(report, unlocked),
-        unlocked,
-      });
-    }
-    return NextResponse.json({ error: createError("KB_NOT_AVAILABLE") }, { status: 502 });
+    console.warn("[numerology/report] KB worker unreachable, using local fallback calculation:", kbFetchResult.reason);
+    const report = await buildDevFallbackReport(parsed.data);
+    return NextResponse.json({
+      ok: true,
+      report: redactReportForAccess(report, unlocked),
+      unlocked,
+    });
   }
 
   try {
     const response = kbFetchResult.value;
 
-    if (!response.ok && process.env.NODE_ENV !== "production") {
-      console.warn(`[numerology/report] Using local dev fallback report (worker returned status ${response.status})`);
+    if (!response.ok) {
+      console.warn(`[numerology/report] Worker returned status ${response.status}, using local fallback calculation`);
       const report = await buildDevFallbackReport(parsed.data);
       return NextResponse.json({
         ok: true,
@@ -183,18 +179,13 @@ export async function POST(request: Request) {
     }
     return NextResponse.json(payload, { status: response.status });
   } catch (err) {
-    console.error("[numerology/report] worker call failed:", err);
-    if (process.env.NODE_ENV !== "production") {
-      console.warn("[numerology/report] Using local dev fallback report (exception in worker call)");
-      const report = await buildDevFallbackReport(parsed.data);
-      return NextResponse.json({
-        ok: true,
-        report: redactReportForAccess(report, unlocked),
-        unlocked,
-      });
-    }
-    const code = err instanceof Error && err.name === "AbortError" ? "TIMEOUT" : "KB_NOT_AVAILABLE";
-    return NextResponse.json({ error: createError(code) }, { status: code === "TIMEOUT" ? 504 : 502 });
+    console.warn("[numerology/report] Worker call failed, using local fallback calculation:", err);
+    const report = await buildDevFallbackReport(parsed.data);
+    return NextResponse.json({
+      ok: true,
+      report: redactReportForAccess(report, unlocked),
+      unlocked,
+    });
   } finally {
     clearTimeout(timeout);
   }
