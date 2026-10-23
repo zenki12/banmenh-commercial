@@ -204,7 +204,7 @@ function SectionBody({
 function resolveAccess(item: Phase["sections"][number], unlocked: boolean): SectionAccess {
   if (unlocked) return "full";
   if (item.access) return item.access;
-  if (["1", "2", "3", "4", "11"].includes(item.number)) return "full";
+  if (["1", "2", "3", "4", "11", "16", "19", "21", "25", "26"].includes(item.number)) return "full";
   if (["5", "6", "23"].includes(item.number)) return "partial";
   return "locked";
 }

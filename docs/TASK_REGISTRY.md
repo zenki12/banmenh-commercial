@@ -42,6 +42,36 @@ Done        Đã hoàn tất và đối chiếu đủ điều kiện done
 
 ## Ad-hoc - Audit Fixes
 
+### T-NUMEROLOGY-PAYWALL-TEASER-RHYTHM - Tối ưu nhịp teaser báo cáo Thần số học
+
+Status: Review
+
+Bối cảnh:
+
+- Paywall in-line hiện chỉ mở các mục tổng quan, Đường Đời và Sứ Mệnh nên nhịp đọc chưa cho khách đủ giá trị ở các cụm Nội tâm và Năng lực.
+- Cần mở các chỉ số chính nhưng tiếp tục khóa tương quan, thử thách, hậu vận và phần giải nghiệp; API vẫn phải redaction nội dung trước khi trả về client.
+
+Yêu cầu:
+
+- Free mở full mục 1, 2, 3, 4, 11, 16, 19, 21, 25, 26.
+- Free mở một phần mục 5, 6, 23 bằng preview đã được synthesizer chuẩn bị.
+- Các mục còn lại khóa bằng `LockedTeaser`; VIP mở đủ toàn bộ 31 mục.
+- CTA mở khóa dùng giá cấu hình và dẫn đúng route thanh toán Thần số học.
+
+Điều kiện Done:
+
+- API payload Free không chứa HTML của các mục bị khóa.
+- UI và API dùng cùng ma trận quyền truy cập; tài khoản đã mở khóa đọc đủ 31 mục.
+- `npm run typecheck`, `npm run lint`, `npm run build`, `git diff --check` pass.
+- Chờ code review độc lập trước khi chuyển `Done`.
+
+Kết quả triển khai 2026-10-23:
+
+- API và `FullReport` đã đồng bộ ma trận Teaser Rhythm: 10 mục mở full, 3 mục mở một phần và 18 mục khóa trong tổng số 31 mục.
+- Smoke test tài khoản Free xác nhận mục 16, 19, 21, 25, 26 có HTML đầy đủ; các mục đào sâu bị khóa có HTML rỗng; mục 5, 6, 23 giữ đúng preview và biểu đồ cần thiết.
+- `LockedTeaser` tiếp tục dùng CTA giá cấu hình và nhận `paymentHref` có query từ trang chi tiết; không thay đổi pricing, entitlement hoặc payment transaction.
+- Typecheck, lint, build và `git diff --check` pass; chờ code review độc lập trước khi chuyển `Done`.
+
 ### T-BRAND-FAVICON-TITLES - Favicon và tiêu đề tab động
 
 Status: Review

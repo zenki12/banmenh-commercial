@@ -47,7 +47,7 @@ async function buildDevFallbackReport(input: z.infer<typeof bodySchema>) {
   return { ...report, ...synthesized };
 }
 
-const FREE_FULL_SECTIONS = new Set(["1", "2", "3", "4", "11"]);
+const FREE_FULL_SECTIONS = new Set(["1", "2", "3", "4", "11", "16", "19", "21", "25", "26"]);
 const FREE_PARTIAL_SECTIONS = new Set(["5", "6", "23"]);
 
 function redactReportForAccess(report: unknown, unlocked: boolean): unknown {

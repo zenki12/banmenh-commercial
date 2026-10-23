@@ -11,6 +11,38 @@
 
 ---
 
+## 2026-10-23 18:29 +07 — T-NUMEROLOGY-PAYWALL-TEASER-RHYTHM hoàn thiện nhịp teaser
+
+Loại: Numerology access control + Conversion UI
+
+Đã làm:
+
+- Mở full cho tài khoản Free tại các mục chính `1, 2, 3, 4, 11, 16, 19, 21, 25, 26` ở cả API redaction và fallback quyền truy cập trong `FullReport`.
+- Giữ partial cho mục `5, 6, 23`; giữ khóa mặc định cho 18 mục phân tích sâu còn lại.
+- Bảo toàn `LockedTeaser` với thông điệp nâng cấp, giá lấy từ cấu hình và CTA dẫn theo `paymentHref` tới `/than-so-hoc/payment` kèm query báo cáo.
+- Giữ redaction phía server: mục khóa không trả HTML hoặc `chartSlot`; mục partial chỉ trả `previewHtml` đã chuẩn bị trong synthesizer.
+
+Không làm:
+
+- Không thay đổi nội dung 31 section, pricing, entitlement, Firestore rules hoặc payment transaction.
+- Không thêm dependency và không deploy production.
+
+Kiểm tra:
+
+- `npm run typecheck` — pass.
+- `npm run lint` — pass.
+- `npm run build` — pass.
+- Smoke API Free — pass: đủ 31 mục, 10 full, 3 partial, 18 locked; mọi mục locked có `htmlLength = 0`.
+- Browser smoke — trang chi tiết render được `LockedTeaser`; CTA xuất hiện sau khi báo cáo tải.
+- `git diff --check` — pass.
+
+Rủi ro còn lại:
+
+- Chưa kiểm thử bằng tài khoản đã có entitlement thật; nhánh `unlocked` giữ nguyên cơ chế mở full hiện có.
+- Task giữ trạng thái `Review`, chờ code review độc lập trước khi chuyển `Done`.
+
+---
+
 ## 2026-10-23 16:10 +07 — T-BRAND-FAVICON-TITLES đồng bộ logo Header
 
 Loại: Brand asset + UI
