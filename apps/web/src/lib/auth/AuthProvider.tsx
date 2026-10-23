@@ -155,6 +155,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signInWithGoogle() {
     setError(null);
     try {
+      const current = firebaseAuth.currentUser;
+      if (current?.isAnonymous) {
+        try {
+          await linkWithPopup(current, createGoogleProvider());
+          return true;
+        } catch (linkErr) {
+          const code = (linkErr as { code?: string })?.code;
+          if (code === "auth/credential-already-in-use" || code === "auth/email-already-in-use") {
+            await signInWithPopup(firebaseAuth, createGoogleProvider());
+            return true;
+          }
+          throw linkErr;
+        }
+      }
       await signInWithPopup(firebaseAuth, createGoogleProvider());
       return true;
     } catch (err) {

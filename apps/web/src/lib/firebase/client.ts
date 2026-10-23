@@ -10,12 +10,12 @@ import { getApp, getApps, initializeApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
 
 function createFirebaseConfig() {
-  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "mock-api-key";
-  const authDomain = process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "mock.firebaseapp.com";
-  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "mock-project";
-  const storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "mock.appspot.com";
-  const messagingSenderId = process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "000000000000";
-  const appId = process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:000000000000:web:mock";
+  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyC6rnSqkcOD1aB70npWtyB-N5Fe3cbwa_U";
+  const authDomain = process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "ban-menh-v2.firebaseapp.com";
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "ban-menh-v2";
+  const storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "ban-menh-v2.appspot.com";
+  const messagingSenderId = process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "763529927902";
+  const appId = process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:763529927902:web:a06df7fdd1bbe1a7dd364f";
 
   return { apiKey, authDomain, projectId, storageBucket, messagingSenderId, appId };
 }
@@ -27,23 +27,5 @@ function getFirebaseApp(): FirebaseApp {
   return getApp();
 }
 
-let firebaseAppInstance: FirebaseApp | null = null;
-let firebaseAuthInstance: Auth | null = null;
-
-export const firebaseApp = new Proxy({} as FirebaseApp, {
-  get(_target, prop) {
-    if (!firebaseAppInstance) {
-      firebaseAppInstance = getFirebaseApp();
-    }
-    return (firebaseAppInstance as any)[prop];
-  },
-});
-
-export const firebaseAuth = new Proxy({} as Auth, {
-  get(_target, prop) {
-    if (!firebaseAuthInstance) {
-      firebaseAuthInstance = getAuth(getFirebaseApp());
-    }
-    return (firebaseAuthInstance as any)[prop];
-  },
-});
+export const firebaseApp: FirebaseApp = getFirebaseApp();
+export const firebaseAuth: Auth = getAuth(firebaseApp);
