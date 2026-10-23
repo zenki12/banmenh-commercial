@@ -39,5 +39,23 @@ function getAdminFirestore(): Firestore {
   return fs;
 }
 
-export const adminAuth: Auth = getAuth(getAdminApp());
-export const adminFirestore: Firestore = getAdminFirestore();
+let adminAuthInstance: Auth | null = null;
+let adminFirestoreInstance: Firestore | null = null;
+
+export const adminAuth = new Proxy({} as Auth, {
+  get(_target, prop) {
+    if (!adminAuthInstance) {
+      adminAuthInstance = getAuth(getAdminApp());
+    }
+    return (adminAuthInstance as any)[prop];
+  },
+});
+
+export const adminFirestore = new Proxy({} as Firestore, {
+  get(_target, prop) {
+    if (!adminFirestoreInstance) {
+      adminFirestoreInstance = getAdminFirestore();
+    }
+    return (adminFirestoreInstance as any)[prop];
+  },
+});

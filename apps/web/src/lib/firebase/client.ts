@@ -33,5 +33,23 @@ function getFirebaseApp(): FirebaseApp {
   return getApp();
 }
 
-export const firebaseApp: FirebaseApp = getFirebaseApp();
-export const firebaseAuth: Auth = getAuth(firebaseApp);
+let firebaseAppInstance: FirebaseApp | null = null;
+let firebaseAuthInstance: Auth | null = null;
+
+export const firebaseApp = new Proxy({} as FirebaseApp, {
+  get(_target, prop) {
+    if (!firebaseAppInstance) {
+      firebaseAppInstance = getFirebaseApp();
+    }
+    return (firebaseAppInstance as any)[prop];
+  },
+});
+
+export const firebaseAuth = new Proxy({} as Auth, {
+  get(_target, prop) {
+    if (!firebaseAuthInstance) {
+      firebaseAuthInstance = getAuth(getFirebaseApp());
+    }
+    return (firebaseAuthInstance as any)[prop];
+  },
+});
