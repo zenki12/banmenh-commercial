@@ -488,6 +488,7 @@ export function PaymentSetup({ productCode }: PaymentSetupProps) {
               ) : (
                 <ErrorState
                   code={createErrorState.code}
+                  description={createErrorState.message}
                   requestId={createErrorState.requestId}
                   title="Không thể tạo đơn thanh toán"
                 />

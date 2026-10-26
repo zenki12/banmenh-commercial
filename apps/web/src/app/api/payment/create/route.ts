@@ -224,13 +224,15 @@ export async function POST(request: Request) {
       cancelUrl: `${moduleReturnUrls.cancelUrl}?orderId=${orderId}`,
     });
   } catch (err) {
-    // Log lỗi không chứa secret/raw response
-    console.error(
-      `[payment/create] PayOS error for orderId=${orderId}:`,
-      err instanceof Error ? err.message : "unknown",
-    );
+    const errorMsg = err instanceof Error ? err.message : "unknown";
+    console.error(`[payment/create] PayOS error for orderId=${orderId}:`, errorMsg);
     return NextResponse.json(
-      { error: createError("PAYMENT_FAILED") },
+      {
+        error: {
+          ...createError("PAYMENT_FAILED"),
+          message: errorMsg.includes("PayOS trả lỗi") ? errorMsg : "Không thể khởi tạo cổng thanh toán PayOS. Vui lòng thử lại sau.",
+        },
+      },
       { status: 502 },
     );
   }

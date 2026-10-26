@@ -42,6 +42,24 @@ function getRequiredEnv(key: string): string {
   return value;
 }
 
+function sanitizeDescription(desc: string, orderCode: number): string {
+  // Loại bỏ dấu tiếng Việt, ký tự đặc biệt theo đúng chuẩn ngân hàng / PayOS
+  const noDiacritics = desc
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .replace(/[^a-zA-Z0-9 ]/g, "")
+    .trim();
+
+  // PayOS giới hạn 25 ký tự
+  const candidate = noDiacritics.slice(0, 25).trim();
+  if (candidate.length >= 3) {
+    return candidate;
+  }
+  return `BM ${orderCode}`.slice(0, 25);
+}
+
 /**
  * Gọi PayOS API POST /v2/payment-requests để tạo payment link + QR.
  * Backend tự tính amount từ pricing contract — không tin amount từ frontend.
@@ -53,8 +71,8 @@ export async function createPaymentRequest(
   const apiKey = getRequiredEnv("PAYOS_API_KEY");
   const checksumKey = getRequiredEnv("PAYOS_CHECKSUM_KEY");
 
-  // PayOS giới hạn description 25 ký tự
-  const description = params.description.slice(0, 25);
+  // Nội dung chuyển khoản chuẩn không dấu, an toàn 100% với PayOS và ngân hàng
+  const description = sanitizeDescription(params.description, params.orderCode);
 
   const signature = signPayosPaymentRequest(
     {
