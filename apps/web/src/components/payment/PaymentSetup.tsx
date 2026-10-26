@@ -111,22 +111,34 @@ function authErrorDescription(code: AppError["code"]) {
     : "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để tiếp tục.";
 }
 
-function loginReturnHref() {
-  if (typeof window === "undefined") return "/";
-  const returnUrl = `${window.location.pathname}${window.location.search}`;
-  return `/?returnUrl=${encodeURIComponent(returnUrl)}`;
+function GoogleIcon() {
+  return (
+    <svg aria-hidden="true" className="size-5" viewBox="0 0 24 24">
+      <path d="M21.35 12.27c0-.71-.06-1.24-.2-1.8H12v3.53h5.37a4.72 4.72 0 0 1-2 3.03l-.02.12 2.9 2.25.2.02c1.86-1.72 2.9-4.24 2.9-7.15Z" fill="#4285F4" />
+      <path d="M12 21.75c2.63 0 4.84-.87 6.45-2.33l-3.08-2.39c-.82.56-1.92.95-3.37.95a5.85 5.85 0 0 1-5.54-4.04l-.12.01-3.02 2.34-.04.11A9.74 9.74 0 0 0 12 21.75Z" fill="#34A853" />
+      <path d="M6.46 13.94A6.02 6.02 0 0 1 6.13 12c0-.68.12-1.33.32-1.94v-.13L3.4 7.56l-.1.05A9.73 9.73 0 0 0 2.25 12c0 1.58.38 3.08 1.03 4.4l3.18-2.46Z" fill="#FBBC05" />
+      <path d="M12 6.02c1.83 0 3.06.79 3.77 1.44l2.74-2.68A9.3 9.3 0 0 0 12 2.25a9.74 9.74 0 0 0-8.72 5.36l3.17 2.45A5.87 5.87 0 0 1 12 6.02Z" fill="#EA4335" />
+    </svg>
+  );
 }
 
 export function PaymentSetup({ productCode }: PaymentSetupProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const product = useMemo(() => (productCode ? findProduct(productCode) : undefined), [productCode]);
-  const { user, isAnonymous, linkAnonymousToGoogle, signInWithGoogle } = useAuth();
+  const {
+    user,
+    loading: authLoading,
+    isAnonymous,
+    error: authError,
+    signInWithGoogle,
+  } = useAuth();
   const [voucherCode, setVoucherCode] = useState("");
   const [voucherStatus, setVoucherStatus] = useState<VoucherStatus>("idle");
   const [voucherResult, setVoucherResult] = useState<VoucherResult | null>(null);
   const [voucherError, setVoucherError] = useState<AppError | null>(null);
   const [creating, setCreating] = useState(false);
+  const [connecting, setConnecting] = useState(false);
   const [createErrorState, setCreateErrorState] = useState<AppError | null>(null);
 
   if (!productCode) {
@@ -160,6 +172,7 @@ export function PaymentSetup({ productCode }: PaymentSetupProps) {
   }
 
   const selectedProduct = product;
+  const isAuthenticated = Boolean(user && !isAnonymous);
   const moduleSlug = moduleToSlug(selectedProduct.module);
   const validVoucher = voucherStatus === "valid" ? voucherResult : null;
   const totalAmount = validVoucher ? validVoucher.finalAmount : selectedProduct.priceVnd;
@@ -180,10 +193,12 @@ export function PaymentSetup({ productCode }: PaymentSetupProps) {
     setVoucherError(null);
   }
 
-  async function ensureSignedIn() {
-    if (!user) return await signInWithGoogle();
-    if (isAnonymous) return await linkAnonymousToGoogle();
-    return true;
+  async function connectGoogle() {
+    if (authLoading) return false;
+    setConnecting(true);
+    const success = await signInWithGoogle();
+    setConnecting(false);
+    return success;
   }
 
   async function handleApplyVoucher() {
@@ -198,7 +213,7 @@ export function PaymentSetup({ productCode }: PaymentSetupProps) {
     setVoucherResult(null);
     setVoucherError(null);
     try {
-      const signedIn = await ensureSignedIn();
+      const signedIn = isAuthenticated || await connectGoogle();
       if (!signedIn) {
         setVoucherStatus("idle");
         return;
@@ -225,14 +240,13 @@ export function PaymentSetup({ productCode }: PaymentSetupProps) {
   }
 
   async function handleConfirm() {
+    if (!isAuthenticated) {
+      setCreateErrorState(createError("AUTH_REQUIRED"));
+      return;
+    }
     setCreating(true);
     setCreateErrorState(null);
     try {
-      const signedIn = await ensureSignedIn();
-      if (!signedIn) {
-        setCreating(false);
-        return;
-      }
       const data = await fetchWithAuth<CreateResponse>("/api/payment/create", {
         method: "POST",
         body: JSON.stringify({
@@ -310,6 +324,93 @@ export function PaymentSetup({ productCode }: PaymentSetupProps) {
 
           <hr className="border-[var(--bm-border-subtle)]" />
 
+          <section aria-labelledby="payment-account-title">
+            <p
+              className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-[var(--bm-primary-soft)]"
+              id="payment-account-title"
+            >
+              Bước 1 · Tài khoản nhận báo cáo
+            </p>
+            {!isAuthenticated ? (
+              <div className="rounded-2xl border border-[var(--bm-border-purple)] bg-[color-mix(in_srgb,var(--bm-primary)_10%,transparent)] p-5 shadow-[var(--bm-shadow-purple)]">
+                <div className="flex items-start gap-3">
+                  <span
+                    aria-hidden="true"
+                    className="grid size-10 shrink-0 place-items-center rounded-full bg-[color-mix(in_srgb,var(--bm-primary)_20%,transparent)] text-[var(--bm-primary-soft)]"
+                  >
+                    <svg className="size-5" fill="none" viewBox="0 0 24 24">
+                      <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 8a7 7 0 0 0-14 0" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" />
+                    </svg>
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-base font-bold text-[var(--bm-text-main)]">
+                      Tài khoản nhận &amp; lưu trữ báo cáo
+                    </h3>
+                    <p className="mt-1 text-sm leading-6 text-[var(--bm-text-soft)]">
+                      Báo cáo VIP sẽ được kích hoạt vĩnh viễn vào tài khoản của bạn để đọc lại bất cứ lúc nào trên mọi thiết bị.
+                    </p>
+                    <Button
+                      className="mt-4"
+                      leftIcon={<GoogleIcon />}
+                      loading={connecting || authLoading}
+                      onClick={() => void connectGoogle()}
+                      size="md"
+                      variant="secondary"
+                    >
+                      Kết nối bằng Google (1-Click)
+                    </Button>
+                    {authError ? (
+                      <p className="mt-3 text-sm leading-6 text-[var(--bm-danger-soft)]" role="alert">
+                        {authError.message}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div
+                className="rounded-2xl border border-[color-mix(in_srgb,var(--bm-success-soft)_35%,transparent)] bg-[color-mix(in_srgb,var(--bm-success-soft)_8%,transparent)] p-4"
+                role="status"
+              >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 items-center gap-3">
+                    {user?.photoURL ? (
+                      <img
+                        alt=""
+                        className="size-10 shrink-0 rounded-full border border-[color-mix(in_srgb,var(--bm-success-soft)_35%,transparent)] object-cover"
+                        height={40}
+                        referrerPolicy="no-referrer"
+                        src={user.photoURL}
+                        width={40}
+                      />
+                    ) : (
+                      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[color-mix(in_srgb,var(--bm-success-soft)_20%,transparent)] text-sm font-black text-[var(--bm-success-soft)]">
+                        {(user?.displayName || user?.email || "T").slice(0, 1).toUpperCase()}
+                      </span>
+                    )}
+                    <span aria-hidden="true" className="grid size-7 shrink-0 place-items-center rounded-full bg-[color-mix(in_srgb,var(--bm-success-soft)_20%,transparent)] text-xs text-[var(--bm-success-soft)]">
+                      ✓
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-xs text-[var(--bm-text-muted)]">Tài khoản nhận báo cáo:</p>
+                      <p className="truncate font-bold text-[var(--bm-text-main)]">
+                        {user?.displayName || user?.email || "Tài khoản Google"}
+                      </p>
+                      {user?.displayName && user?.email ? (
+                        <p className="truncate text-xs text-[var(--bm-text-muted)]">{user.email}</p>
+                      ) : null}
+                    </div>
+                  </div>
+                  <span className="w-fit rounded-full border border-[color-mix(in_srgb,var(--bm-success-soft)_30%,transparent)] px-3 py-1 text-xs font-semibold text-[var(--bm-success-soft)]">
+                    Đã sẵn sàng
+                  </span>
+                </div>
+              </div>
+            )}
+          </section>
+
+          <hr className="border-[var(--bm-border-subtle)]" />
+
           <section>
             <h3>Mã giảm giá</h3>
             <form
@@ -382,7 +483,7 @@ export function PaymentSetup({ productCode }: PaymentSetupProps) {
               {isAuthError(createErrorState.code) ? (
                 <UnauthorizedState
                   description={authErrorDescription(createErrorState.code)}
-                  onLogin={() => router.push(loginReturnHref())}
+                  onLogin={() => void connectGoogle()}
                 />
               ) : (
                 <ErrorState
@@ -394,9 +495,21 @@ export function PaymentSetup({ productCode }: PaymentSetupProps) {
             </Card>
           ) : null}
 
-          <Button fullWidth loading={creating} onClick={() => void handleConfirm()} size="lg">
-            Thanh toán {formatPriceVnd(totalAmount)}
-          </Button>
+          {isAuthenticated ? (
+            <Button fullWidth loading={creating} onClick={() => void handleConfirm()} size="lg" variant="primary">
+              Tạo mã QR thanh toán {formatPriceVnd(totalAmount)}
+            </Button>
+          ) : (
+            <Button
+              fullWidth
+              loading={connecting || authLoading}
+              onClick={() => void connectGoogle()}
+              size="lg"
+              variant="secondary"
+            >
+              Kết nối Google để tạo mã thanh toán
+            </Button>
+          )}
           <p className="text-sm leading-6 text-[var(--bm-text-muted)]">
             PayOS chỉ nhận số tiền do backend tính từ gói đã chọn và voucher hợp lệ. Trình duyệt không
             được tự tạo quyền truy cập hoặc tự gửi số tiền thanh toán.

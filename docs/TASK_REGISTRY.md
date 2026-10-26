@@ -42,6 +42,34 @@ Done        Đã hoàn tất và đối chiếu đủ điều kiện done
 
 ## Ad-hoc - Audit Fixes
 
+### T-PAYMENT-AUTH-CARD - Minh bạch tài khoản nhận báo cáo trên màn hình thanh toán
+
+Status: Review
+
+Bối cảnh:
+
+- Luồng thanh toán hiện chỉ yêu cầu Google sau khi khách bấm áp dụng voucher hoặc tạo đơn, gây cảm giác bị chặn bất ngờ.
+- Khách cần biết trước báo cáo/quyền lợi sẽ được gắn vào tài khoản nào và có thể đọc lại trên thiết bị khác.
+
+Phạm vi:
+
+- Thêm khối trạng thái tài khoản ngay trong `PaymentSetup`, gồm trạng thái cần kết nối và đã sẵn sàng.
+- CTA cuối trang đổi theo auth state; `handleConfirm` không tự bật popup đăng nhập.
+- Voucher tiếp tục cho phép nhập, yêu cầu Google trước khi gọi API nếu tài khoản chưa sẵn sàng.
+- Giữ nguyên pricing, backend amount calculation, PayOS transaction và entitlement.
+
+AI Tools Used:
+
+- Codex: triển khai UI/payment flow, kiểm tra accessibility và chạy quality gate.
+
+Kết quả review nội bộ:
+
+- `PaymentSetup` hiển thị rõ bước tài khoản nhận báo cáo trước voucher và CTA thanh toán; trạng thái chưa kết nối/đã sẵn sàng có nội dung, biểu tượng và màu trạng thái riêng.
+- `handleConfirm()` chỉ tạo đơn khi auth state đã xác nhận tài khoản không-anonymous, không còn tự mở popup Google giữa thao tác tạo QR.
+- Áp dụng voucher vẫn yêu cầu kết nối Google trước khi gọi API; pricing, amount calculation phía server, transaction PayOS và entitlement không thay đổi.
+- `npm run typecheck`, `npm run lint`, `npm run build`, `git diff --check` và HTTP smoke `/than-so-hoc/payment` đều pass.
+- Chờ code review độc lập và kiểm thử thủ công popup Google/PayOS bằng tài khoản dev trước khi chuyển `Done`.
+
 ### T-AUTH-HEADER-AND-TAROT-GATE - Tinh gọn Header và chặn anonymous dùng quota Tarot
 
 Status: Review

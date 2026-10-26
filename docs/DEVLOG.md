@@ -11,6 +11,37 @@
 
 ---
 
+## 2026-10-26 13:25 +07 — T-PAYMENT-AUTH-CARD minh bạch tài khoản nhận báo cáo
+
+Loại: Payment UX + Auth
+
+Đã làm:
+
+- Thêm bước `Tài khoản nhận báo cáo` trực tiếp trong `PaymentSetup`, giải thích báo cáo VIP được gắn vĩnh viễn với tài khoản và có thể đọc lại trên nhiều thiết bị.
+- Khi chưa có tài khoản không-anonymous, hiển thị Card kết nối Google cùng CTA rõ ràng; khi đã kết nối, hiển thị avatar hoặc chữ đại diện, tên/email, dấu xác nhận và badge `Đã sẵn sàng`.
+- Đổi CTA cuối trang theo auth state: yêu cầu kết nối Google trước hoặc tạo mã QR với đúng tổng tiền đã tính.
+- Tách xác thực khỏi `handleConfirm()`: thao tác tạo đơn gọi thẳng `/api/payment/create` và không tự bật popup Google; nhánh phòng vệ chỉ trả lỗi auth nếu state không hợp lệ.
+- Giữ luồng voucher cho phép nhập bình thường, sau hành động `Áp dụng` sẽ kết nối Google trước khi gọi API nếu cần.
+- Bổ sung trạng thái loading, lỗi auth gần hành động, nhãn accessible và SVG thay cho emoji trang trí.
+
+Không làm:
+
+- Không thay đổi pricing, logic tính amount phía backend, PayOS transaction, entitlement hoặc route API thanh toán.
+- Không thêm dependency và không deploy production.
+
+Kiểm tra:
+
+- `npm run typecheck` — pass.
+- `npm run lint` — pass.
+- `npm run build` — pass; Next.js tạo đủ 48 route.
+- `git diff --check` — pass.
+- HTTP smoke `/than-so-hoc/payment` — `200`; HTML có tiêu đề tài khoản, nội dung lưu vĩnh viễn và CTA kết nối Google.
+
+Rủi ro còn lại:
+
+- Cần kiểm thử thủ công popup Google, trạng thái avatar sau đăng nhập và chuyển tiếp sang VietQR PayOS bằng tài khoản dev; không tự động hóa đăng nhập tài khoản thật.
+- Task giữ trạng thái `Review` để chờ code review độc lập theo workflow dự án.
+
 ## 2026-10-26 11:53 +07 — T-AUTH-HEADER-AND-TAROT-GATE siết quota theo tài khoản đăng nhập
 
 Loại: Auth UX + Tarot Security
