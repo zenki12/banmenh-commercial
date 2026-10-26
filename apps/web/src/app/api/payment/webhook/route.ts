@@ -1,6 +1,6 @@
 export const runtime = "nodejs";
 
-import { createError } from "@banmenh/shared";
+import { createError, type Purchase } from "@banmenh/shared";
 import { NextResponse } from "next/server";
 import { grantEntitlementFromPurchase } from "../../../../lib/entitlements/service";
 import { adminFirestore } from "../../../../lib/firebase/admin";
@@ -88,6 +88,7 @@ export async function POST(request: Request) {
     productCode: string;
     amount: number;
     status: string;
+    createdAt?: string;
     voucherCode?: string;
     processingAt?: number;
   };
@@ -137,14 +138,20 @@ export async function POST(request: Request) {
 
   // 7. Cấp quyền truy cập (Entitlement) cho người dùng
   try {
-    const fullPurchase = {
-      ...purchase,
+    const fullPurchase: Purchase = {
       id: orderId,
-      status: "confirmed" as const,
+      orderId,
+      userId: purchase.userId,
+      module: purchase.module,
+      productCode: purchase.productCode,
+      amount: purchase.amount,
+      status: "confirmed",
+      createdAt: purchase.createdAt || now,
       confirmedAt: now,
-      provider: "payos" as const,
-      currency: "VND" as const,
+      provider: "payos",
+      currency: "VND",
       providerRef,
+      voucherCode: purchase.voucherCode,
     };
     await grantEntitlementFromPurchase(fullPurchase, { userId: purchase.userId });
     console.log(`[payment/webhook] Granted entitlement for userId=${purchase.userId} orderId=${orderId}`);
