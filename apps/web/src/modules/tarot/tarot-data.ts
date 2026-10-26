@@ -1,3 +1,5 @@
+import { TAROT_DAILY_KB } from "./tarot-daily-kb";
+
 export type Phase =
   | "landing"
   | "fieldSelect"
@@ -318,14 +320,17 @@ export function getDailyCard(dateStr: string, seed?: string): DailyCard {
   const card = DECK[hash % DECK.length] ?? DECK[0];
   const orientation: "upright" | "reversed" = (hash >>> 8) % 2 === 0 ? "upright" : "reversed";
 
-  const body = orientation === "reversed"
-    ? card.reversed
-    : (DAILY_CARD_MESSAGES[card.nameVi] ?? card.upright);
+  const dailyMeaning = TAROT_DAILY_KB[card.id];
+  const body = dailyMeaning
+    ? (orientation === "reversed" ? dailyMeaning.reversed : dailyMeaning.upright)
+    : (orientation === "reversed" ? card.reversed : card.upright);
+  const advice = dailyMeaning?.advice || card.advice;
 
   return {
     ...card,
     orientation,
     body,
+    advice,
   };
 }
 
