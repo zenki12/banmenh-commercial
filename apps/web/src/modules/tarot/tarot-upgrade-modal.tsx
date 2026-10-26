@@ -36,7 +36,7 @@ export function TarotUpgradeModal({
         </ul>
       </div>
       <div className="mx-auto mt-6 grid max-w-lg gap-3 sm:grid-cols-2">
-        <Button fullWidth href="/tarot/payment" size="lg">Nâng cấp qua PayOS</Button>
+        <Button fullWidth href="/tarot/payment" size="lg">Mở khóa gói Tarot ngay</Button>
         <Button fullWidth onClick={onClose} size="lg" variant="secondary">Để sau</Button>
       </div>
     </ModalShell>

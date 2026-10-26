@@ -25,7 +25,7 @@ TAROT_COMBO_TEST_MODE = "false"
 
 [[env.production.kv_namespaces]]
 binding = "BANMENH_KB_DEV"
-id = "placeholder-prod-kv-id"
+id = "d589659ab5614636adc0d2620d922a43"
 
 [[env.production.r2_buckets]]
 binding = "TAROT_KB_R2"

@@ -20,8 +20,8 @@ const FAQS = [
     a: "Bản Mệnh tập trung vào 33 chỉ số, chu kỳ thời gian, lưới Pythagoras và phần luận giải sâu hơn cho từng nhóm chỉ số.",
   },
   {
-    q: "PayOS có an toàn không?",
-    a: "PayOS là cổng thanh toán phổ biến tại Việt Nam. Bản Mệnh không lưu thông tin thẻ hoặc tài khoản ngân hàng của bạn.",
+    q: "Thanh toán quét mã có an toàn không?",
+    a: "Giao dịch được xử lý an toàn qua cổng thanh toán trung gian đạt chuẩn bảo mật ngân hàng. Bản Mệnh không lưu thông tin tài khoản ngân hàng của bạn.",
   },
 ];
 

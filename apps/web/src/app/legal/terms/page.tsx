@@ -77,7 +77,7 @@ const sections: TermSection[] = [
     title: "4. Thanh toán và quyền truy cập",
     body: [
       "Một số nội dung hoặc tính năng trên nền tảng có thể yêu cầu thanh toán để mở khóa.",
-      "Các giao dịch được thực hiện thông qua đối tác thanh toán được tích hợp trong hệ thống, hiện tại là PayOS cho các luồng thanh toán phù hợp.",
+      "Các giao dịch được thực hiện thông qua cổng thanh toán trung gian được cấp phép tại Việt Nam cho các luồng thanh toán phù hợp.",
       "Sau khi thanh toán thành công:",
     ],
     list: [

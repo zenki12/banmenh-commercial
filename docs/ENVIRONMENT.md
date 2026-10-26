@@ -132,3 +132,11 @@ Còn thiếu:
 - Status: `Ready`
 - Rollback deployment: `dpl_5XVyx5J3DkerooVbL9KvqmQBtBYN`
 - Known gap: production còn thiếu các biến `PAYOS_*`, `ADMIN_TOKEN`, Telegram và `KB_WORKER_URL`; chưa nghiệm thu payment/admin/alert.
+
+### 2026-10-26 20:21 +07 — Production KB restored
+
+- KB Worker: `https://banmenh-kb-prod.numerology-thai.workers.dev`.
+- KV production chứa private keys `kb-numerology` và `kb-narrative`; raw JSON không nằm trong Git/static artifact.
+- R2 production: `banmenh-tarot-kb-prod`.
+- Vercel Production đã cấu hình `KB_WORKER_URL` và redeploy artifact hiện hành tại `dpl_B8SMajbRSxWa4Ypofa8o59NnwhMv`.
+- Production report smoke trả `kbVersion: 1.0`, đủ 31 section và dữ liệu luận giải thay vì `local-dev-fallback`.

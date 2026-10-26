@@ -50,7 +50,7 @@ const NUMEROLOGY_FEATURES = [
   "Xem đầy đủ các chỉ số cốt lõi, vận số năm và chu kỳ tháng.",
   "Lưu quyền truy cập trong tài khoản để đọc lại bất cứ lúc nào.",
   "Áp dụng voucher hợp lệ trước khi tạo đơn thanh toán.",
-  "Thanh toán qua PayOS với số tiền được tính lại ở backend.",
+  "Quét mã VietQR với số tiền được hệ thống xác nhận tự động.",
 ];
 
 function StatusBadge({ tone, children }: { tone: "success" | "danger"; children: ReactNode }) {
@@ -288,7 +288,7 @@ export function PaymentSetup({ productCode }: PaymentSetupProps) {
   return (
     <PageShell
       title="Xác nhận thanh toán"
-      subtitle="Kiểm tra thông tin gói, áp dụng voucher nếu có, rồi tạo đơn thanh toán qua PayOS."
+      subtitle="Kiểm tra thông tin gói, áp dụng voucher nếu có, rồi thanh toán bằng chuyển khoản ngân hàng."
       showBack
       backHref={buildModulePath(selectedProduct.module, "")}
       backLabel="Quay lại"
@@ -514,8 +514,8 @@ export function PaymentSetup({ productCode }: PaymentSetupProps) {
             </Button>
           )}
           <p className="text-sm leading-6 text-[var(--bm-text-muted)]">
-            PayOS chỉ nhận số tiền do backend tính từ gói đã chọn và voucher hợp lệ. Trình duyệt không
-            được tự tạo quyền truy cập hoặc tự gửi số tiền thanh toán.
+            Hệ thống tự động kích hoạt ngay sau khi nhận được chuyển khoản hợp lệ. Mọi thông tin thanh
+            toán được bảo mật theo tiêu chuẩn ngân hàng.
           </p>
         </div>
       </Card>

@@ -188,7 +188,7 @@ function CheckoutContent() {
             onClick={() => pending.checkoutUrl && window.open(pending.checkoutUrl, "_blank")}
             variant="secondary"
           >
-            Mở trên PayOS
+            Mở trang thanh toán ngân hàng
           </Button>
           <Button fullWidth onClick={() => router.push("/pricing")} variant="ghost">
             Đổi gói

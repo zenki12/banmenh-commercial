@@ -42,6 +42,56 @@ Done        Đã hoàn tất và đối chiếu đủ điều kiện done
 
 ## Ad-hoc - Audit Fixes
 
+### T-CLEAN-PAYMENT-BRANDING - Chuẩn hóa ngôn từ thanh toán VietQR trên UI
+
+Status: Review
+
+Bối cảnh:
+
+- UI hiện nhắc trực tiếp tên đối tác PayOS tại nhiều màn hình thanh toán, pricing, FAQ, account và legal.
+- Thương hiệu cần dùng ngôn ngữ quen thuộc với khách hàng: chuyển khoản ngân hàng, quét mã VietQR và kích hoạt tự động.
+
+Phạm vi:
+
+- Chỉ thay đổi copy/label user-facing trong `apps/web/src`; giữ nguyên provider code, API, webhook, biến môi trường và logic thanh toán.
+- Chuẩn hóa Terms/Privacy theo cách gọi “cổng thanh toán trung gian được cấp phép tại Việt Nam”.
+- Xác nhận không còn chữ `PayOS` trong JSX/UI copy; các định danh kỹ thuật nội bộ vẫn được giữ nguyên.
+
+AI Tools Used:
+
+- Codex: rà soát UI copy, cập nhật text và chạy quality gates.
+
+Kết quả:
+
+- Các màn hình payment, checkout, Tarot upgrade, account, pricing, FAQ, Terms và Privacy dùng ngôn ngữ VietQR/chuyển khoản ngân hàng thay cho tên đối tác.
+- Không còn chuỗi `PayOS` trong file giao diện `.tsx`; các định danh kỹ thuật lowercase `"payos"` và code backend được giữ nguyên.
+- `npm run typecheck`, `npm run lint`, `npm run build` và `git diff --check` pass; chờ code review trước khi Done.
+
+### T-KB-PROD-RESTORE - Khôi phục luận giải Thần số học đầy đủ trên production
+
+Status: Review
+
+Bối cảnh:
+
+- `banmenh.online` trả `meta.kbVersion = local-dev-fallback`, khiến chỉ số vẫn tính được nhưng dữ liệu luận giải là `null` và UI hiện “đang được cập nhật”.
+- Bộ KB đầy đủ vẫn còn trong private workspace, nhưng production chưa có KV namespace thật và Vercel thiếu `KB_WORKER_URL`.
+
+Phạm vi:
+
+- Validate bộ `kb.json`/`narrative.json`, lưu ngoài Git và upload vào KV production riêng.
+- Tạo/deploy `banmenh-kb-prod`, giữ Tarot test mode tắt trên production.
+- Cấu hình `KB_WORKER_URL` trên Vercel, redeploy đúng artifact production hiện hành và smoke test API.
+
+Kết quả:
+
+- Worker production trả KB `1.0`, đủ 31 mục; Birthday, Attitude và Tension đều có dữ liệu.
+- `banmenh.online/api/numerology/report` không còn dùng `local-dev-fallback`; mục 25 không còn placeholder “đang được cập nhật”.
+- Raw KB tiếp tục bị `kb-private/.gitignore` chặn khỏi Git và static artifact.
+
+AI Tools Used:
+
+- Codex: audit production response, tạo hạ tầng KV/R2, upload KB, deploy Worker, cấu hình Vercel và chạy smoke test.
+
 ### T-ACCOUNT-MODULE-HISTORY - Lịch sử Thần số học/Tarot theo tài khoản
 
 Status: Review

@@ -43,7 +43,7 @@ export function MysticPricing() {
                   <li>✦ 50.000+ chữ luận giải cá nhân hóa</li>
                   <li>✦ Truy cập vĩnh viễn không gia hạn</li>
                   <li>✦ Năm cá nhân, tháng cá nhân và chu kỳ vận số</li>
-                  <li>✦ Bảo mật thanh toán PayOS</li>
+                  <li>✦ Thanh toán quét mã VietQR tự động 24/7</li>
                 </ul>
                 <p className="early-note">
                   💫 Gói mở khóa trọn bộ 6 hệ thống sẽ ra mắt cùng Tarot. Những người tham gia sớm sẽ có giá ưu đãi

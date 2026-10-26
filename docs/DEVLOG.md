@@ -11,6 +11,63 @@
 
 ---
 
+## 2026-10-26 20:40 +07 — T-CLEAN-PAYMENT-BRANDING chuẩn hóa UI VietQR
+
+Loại: UI Copy + Payment Branding + Legal Copy
+
+Đã làm:
+
+- Thay toàn bộ tên đối tác PayOS trên UI bằng ngôn ngữ hướng người dùng: chuyển khoản ngân hàng, quét mã VietQR, chuyển khoản QR và kích hoạt tự động 24/7.
+- Cập nhật subtitle/quyền lợi/chú thích an toàn tại Payment Setup, nút mở trang thanh toán, CTA Tarot, nguồn mở khóa trong Account, pricing và FAQ.
+- Chuẩn hóa Terms/Privacy sang cách gọi “cổng thanh toán trung gian được cấp phép tại Việt Nam”.
+- Rà soát riêng toàn bộ `.tsx`: không còn chuỗi hiển thị `PayOS`.
+
+Không làm:
+
+- Không đổi provider code `"payos"`, API create/check/webhook, chữ ký, biến môi trường, log kỹ thuật hoặc logic thanh toán.
+- Không thêm dependency, không thay pricing và không deploy production.
+
+Kiểm tra:
+
+- `npm run typecheck` — pass.
+- `npm run lint` — pass.
+- `npm run build` — pass.
+- `rg -n "PayOS" apps/web/src -g "*.tsx"` — không có kết quả.
+- UI/UX review: CTA vẫn có accessible name rõ ràng; thay đổi chỉ là copy nên không ảnh hưởng focus, touch target, layout hay motion.
+
+## 2026-10-26 20:21 +07 — T-KB-PROD-RESTORE khôi phục luận giải đầy đủ
+
+Loại: Production Incident Recovery + Private KB
+
+Đã làm:
+
+- Xác nhận root cause trên production: `/api/numerology/report` trả `kbVersion: local-dev-fallback` và các trường `birthday.data`, `attitude.data`, `tensionNumber.data` là `null` do Vercel chưa kết nối KB Worker.
+- Khôi phục hai nguồn private `kb.json` và `narrative.json` vào `kb-private/numerology/`; cả hai vẫn bị Git ignore và không nằm trong frontend/static artifact.
+- Validate thành công 33 nhóm/305 chỉ số, 190 narrative entries và synthesizer đủ 4 phase/31 section cho 4 ca kiểm thử.
+- Tạo KV production riêng, upload hai key `kb-numerology` và `kb-narrative`, đồng thời tạo bucket R2 `banmenh-tarot-kb-prod` sau khi user tự kích hoạt R2.
+- Deploy Cloudflare Worker `banmenh-kb-prod` tại `https://banmenh-kb-prod.numerology-thai.workers.dev`, version `5ad190de-546b-48b8-b88d-b1c5b37d4952`.
+- Cấu hình Vercel Production `KB_WORKER_URL` trỏ tới Worker trên; redeploy nguyên artifact production hiện hành để không đưa worktree chưa commit lên mạng.
+- Vercel deployment mới `dpl_B8SMajbRSxWa4Ypofa8o59NnwhMv` đã Ready và alias lại `https://banmenh.online`.
+
+Kiểm tra:
+
+- KB Worker `/health` — pass.
+- KB Worker `/numerology/report` — `kbVersion: 1.0`, đủ 31 section, Birthday/Attitude/Tension có data.
+- `https://banmenh.online` — HTTP 200.
+- Production `/api/numerology/report` — `kbVersion: 1.0`, đủ 31 section, mục 25 không còn placeholder “đang được cập nhật”.
+- `npm run typecheck`, `npm run lint`, KB Worker typecheck và `npm run build` — pass.
+- `npm run security:smoke` — pass, không phát hiện secret hardcode hoặc KB leak vào frontend/static.
+
+Không làm:
+
+- Không commit hoặc public raw KB; không thay pricing, payment, entitlement hay Firestore.
+- Không deploy trực tiếp worktree hiện tại; chỉ redeploy artifact production đang Ready với biến môi trường mới.
+
+Rollback:
+
+- Frontend trước khi nối KB: `dpl_2QfoYrRZL6ZneFZ1wpnfoKUCqazP`.
+- Nếu Worker gặp sự cố, gỡ/đổi `KB_WORKER_URL` rồi redeploy artifact trước; raw KB vẫn nằm trong KV private.
+
 ## 2026-10-26 17:30 +07 — T-ACCOUNT-MODULE-HISTORY lưu nhiều báo cáo theo tài khoản
 
 Loại: Account History + Report-scoped Entitlement

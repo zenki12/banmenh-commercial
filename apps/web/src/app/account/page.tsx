@@ -31,7 +31,7 @@ function NumerologyReportCard({ report }: { report: Report }) {
   const sourceLabel = report.unlockSource === "voucher_free"
     ? "Voucher / 0đ"
     : report.unlockSource === "payos"
-      ? "PayOS"
+      ? "Chuyển khoản QR"
       : report.unlockSource === "admin"
         ? "Được tặng"
         : "Quyền cũ đã khôi phục";
@@ -266,7 +266,7 @@ export default function AccountPage() {
                 </div>
               ) : (
                 <Card as="div" className="mt-4" padding="md" variant="default">
-                  <EmptyState title="Chưa có báo cáo đã mua" description="Báo cáo mở bằng PayOS, voucher 100% hoặc đơn 0đ sẽ xuất hiện tại đây." />
+                  <EmptyState title="Chưa có báo cáo đã mua" description="Báo cáo được mở bằng chuyển khoản QR, voucher 100% hoặc đơn 0đ sẽ xuất hiện tại đây." />
                 </Card>
               )}
             </div>

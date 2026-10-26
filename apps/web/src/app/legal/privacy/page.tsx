@@ -108,7 +108,7 @@ const sections: Section[] = [
     ],
     list: ["Xác thực tài khoản.", "Lưu trữ dữ liệu.", "Xử lý thanh toán.", "Hỗ trợ tạo luận giải Tarot cá nhân hóa bằng AI.", "Bảo mật hệ thống.", "Giám sát vận hành."],
     note:
-      "Ví dụ: Firebase cho xác thực người dùng, Firestore cho lưu trữ dữ liệu, Cloudflare cho bảo mật và tối ưu hiệu năng, PayOS cho thanh toán và Google Gemini cho luận giải Tarot có AI. Khi dùng luận giải Tarot chuyên sâu, tên hiển thị nếu có, ngày sinh/giới tính nếu bạn cung cấp, chủ đề, câu hỏi, lá bài và câu trả lời làm rõ có thể được gửi tới Google Gemini. Bản Mệnh không gửi thông tin thanh toán, thông tin xác thực hoặc khóa bí mật sang nhà cung cấp AI.",
+      "Ví dụ: Firebase cho xác thực người dùng, Firestore cho lưu trữ dữ liệu, Cloudflare cho bảo mật và tối ưu hiệu năng, cổng thanh toán trung gian được cấp phép tại Việt Nam cho thanh toán và Google Gemini cho luận giải Tarot có AI. Khi dùng luận giải Tarot chuyên sâu, tên hiển thị nếu có, ngày sinh/giới tính nếu bạn cung cấp, chủ đề, câu hỏi, lá bài và câu trả lời làm rõ có thể được gửi tới Google Gemini. Bản Mệnh không gửi thông tin thanh toán, thông tin xác thực hoặc khóa bí mật sang nhà cung cấp AI.",
   },
   {
     title: "6. Xử lý dữ liệu Tarot bằng AI",
