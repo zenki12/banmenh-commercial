@@ -21,13 +21,12 @@ export const firestoreEntitlementRepository: EntitlementRepository = {
   async listByUser(userId, _ctx) {
     const snap = await col()
       .where("userId", "==", userId)
-      .where("status", "==", "active")
-      .orderBy("startsAt", "desc")
-      .limit(50)
+      .limit(100)
       .get();
     return snap.docs
       .map((d) => fromFirestoreDoc<Entitlement>(d))
-      .filter((e): e is Entitlement => e !== null);
+      .filter((e): e is Entitlement => e !== null && e.status === "active")
+      .sort((a, b) => Date.parse(b.startsAt) - Date.parse(a.startsAt));
   },
 
   async findActiveForReport(userId, reportId, _ctx) {

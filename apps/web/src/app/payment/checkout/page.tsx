@@ -18,11 +18,13 @@ type PendingPayment = {
   voucherCode?: string | null;
   discountVnd?: number;
   expiresAt: string;
+  returnQuery?: string;
 };
 
 type CheckResponse = {
   orderId: string;
   status: "pending" | "confirming" | "confirmed" | "expired" | "failed";
+  entitlementGranted: boolean;
 };
 
 const STORAGE_KEY = "banmenh-payment-pending";
@@ -53,6 +55,7 @@ function readPendingPayment(orderId: string | null): PendingPayment | null {
       voucherCode: parsed.voucherCode,
       discountVnd: parsed.discountVnd,
       expiresAt: parsed.expiresAt,
+      returnQuery: typeof parsed.returnQuery === "string" ? parsed.returnQuery : undefined,
     };
   } catch {
     return null;
@@ -107,11 +110,12 @@ function CheckoutContent() {
         const data = await fetchWithAuth<CheckResponse>(
           `/api/payment/check?orderId=${encodeURIComponent(pending.orderId)}`,
         );
-        if (data.status === "confirmed") {
+        if (data.status === "confirmed" && data.entitlementGranted) {
           setStatus("confirmed");
-          sessionStorage.removeItem(STORAGE_KEY);
           const successBase = pending.moduleSlug ? `/${pending.moduleSlug}/payment/success` : "/payment/success";
-          router.push(`${successBase}?orderId=${encodeURIComponent(pending.orderId)}`);
+          const successParams = new URLSearchParams(pending.returnQuery ?? "");
+          successParams.set("orderId", pending.orderId);
+          router.push(`${successBase}?${successParams.toString()}`);
         } else if (data.status === "expired" || data.status === "failed") {
           setStatus("expired");
         }

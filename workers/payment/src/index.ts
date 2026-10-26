@@ -24,6 +24,8 @@ type Env = {
   CORS_ALLOWED_ORIGINS?: string;
 };
 
+type PurchaseRecord = Record<string, unknown>;
+
 // Zod không available ở Workers — validate thủ công
 function isWebhookBody(
   body: unknown,
@@ -56,6 +58,39 @@ function getAllowedOrigins(env: Env): Set<string> {
     if (trimmed) origins.add(trimmed);
   }
   return origins;
+}
+
+async function ensureEntitlements(
+  projectId: string,
+  accessToken: string,
+  purchase: PurchaseRecord,
+  orderId: string,
+  now: string,
+): Promise<void> {
+  const specs = PRODUCT_ENTITLEMENT_MAP[String(purchase.productCode ?? "")];
+  const userId = String(purchase.userId ?? "");
+  if (!specs?.length || !userId) {
+    throw new Error("Purchase không có entitlement mapping hoặc userId hợp lệ.");
+  }
+
+  await Promise.all(
+    specs.map(async (spec) => {
+      const entitlementId = `${userId}_${orderId}${spec.idSuffix ?? ""}`;
+      const expiresAt = spec.expiresInDays
+        ? new Date(Date.now() + spec.expiresInDays * 86400000).toISOString()
+        : undefined;
+      await firestoreCreate(projectId, accessToken, "entitlements", entitlementId, {
+        userId,
+        module: spec.module,
+        type: spec.type,
+        purchaseId: orderId,
+        status: "active",
+        startsAt: now,
+        expiresAt,
+        lifetime: !spec.expiresInDays,
+      });
+    }),
+  );
 }
 
 app.use("*", async (c, next) => {
@@ -181,8 +216,14 @@ app.post("/webhook/payos", async (c) => {
     return c.json({ ok: true, ack: true, note: "purchase_not_found" });
   }
 
-  // 5. Idempotency
+  // 5. Idempotency + self-heal: confirmed vẫn phải có entitlement.
   if (purchase.status === "confirmed") {
+    try {
+      await ensureEntitlements(sa.projectId, accessToken, purchase, orderId, now);
+    } catch (err) {
+      console.error(`[webhook] entitlement recovery failed orderId=${orderId}:`, err);
+      return c.json({ ok: false, error: "Entitlement error" }, 500);
+    }
     return c.json({ ok: true, idempotent: true, orderId });
   }
 
@@ -191,7 +232,7 @@ app.post("/webhook/payos", async (c) => {
   const LOCK_TTL_MS = 30_000;
   const processingAt = Number(purchase.processingAt ?? 0);
   if (processingAt && Date.now() - processingAt < LOCK_TTL_MS) {
-    return c.json({ ok: true, processing: true, orderId });
+    return c.json({ ok: false, processing: true, orderId }, 503);
   }
   try {
     await firestorePatch(sa.projectId, accessToken, "purchases", orderId, { processingAt: Date.now() }, ["processingAt"]);
@@ -216,7 +257,32 @@ app.post("/webhook/payos", async (c) => {
     return c.json({ ok: true, ack: true, note: "amount_mismatch" });
   }
 
-  // 7. Update purchase → confirmed
+  // 7. Grant entitlement trước. Nếu lỗi, giữ purchase chưa confirmed để PayOS retry.
+  try {
+    await ensureEntitlements(sa.projectId, accessToken, purchase, orderId, now);
+  } catch (err) {
+    console.error(`[webhook] entitlement grant failed orderId=${orderId}:`, err);
+    try {
+      await firestorePatch(
+        sa.projectId,
+        accessToken,
+        "purchases",
+        orderId,
+        { processingAt: 0 },
+        ["processingAt"],
+      );
+    } catch {
+      // Lock tự hết hạn nếu không thể xóa ngay.
+    }
+    notifyTelegram(
+      formatPaymentError("server_error", orderId, {
+        message: serverErrorMessage(err),
+      }),
+    );
+    return c.json({ ok: false, error: "Entitlement error" }, 500);
+  }
+
+  // 8. Chỉ update purchase → confirmed sau khi entitlement đã tồn tại.
   try {
     await firestorePatch(
       sa.projectId,
@@ -238,39 +304,6 @@ app.post("/webhook/payos", async (c) => {
       }),
     );
     return c.json({ ok: false, error: "DB error" }, 500);
-  }
-
-  // 8. Grant entitlement(s)
-  const specs = PRODUCT_ENTITLEMENT_MAP[String(purchase.productCode ?? "")];
-  if (specs && specs.length > 0) {
-    const userId = String(purchase.userId ?? "");
-    await Promise.allSettled(
-      specs.map(async (spec) => {
-        const entitlementId = `${userId}_${orderId}${spec.idSuffix ?? ""}`;
-        const expiresAt = spec.expiresInDays
-          ? new Date(Date.now() + spec.expiresInDays * 86400000).toISOString()
-          : undefined;
-        try {
-          await firestoreCreate(sa.projectId, accessToken, "entitlements", entitlementId, {
-            userId,
-            module: spec.module,
-            type: spec.type,
-            purchaseId: orderId,
-            status: "active",
-            startsAt: now,
-            expiresAt,
-            lifetime: !spec.expiresInDays,
-          });
-        } catch (err) {
-          console.error(`[webhook] firestoreCreate entitlement ${entitlementId} failed:`, err);
-          notifyTelegram(
-            formatPaymentError("server_error", orderId, {
-              message: serverErrorMessage(err),
-            }),
-          );
-        }
-      }),
-    );
   }
 
   const voucherCode = String(purchase.voucherCode ?? "").trim().toUpperCase();

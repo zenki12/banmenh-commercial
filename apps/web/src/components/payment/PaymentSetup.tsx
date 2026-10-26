@@ -273,6 +273,7 @@ export function PaymentSetup({ productCode }: PaymentSetupProps) {
           voucherCode: data.voucherCode,
           discountVnd: data.discountVnd ?? 0,
           expiresAt: data.expiresAt,
+          returnQuery: searchParams.toString(),
         }),
       );
       router.push(`/payment/checkout?orderId=${encodeURIComponent(data.orderId)}`);

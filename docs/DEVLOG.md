@@ -11,6 +11,40 @@
 
 ---
 
+## 2026-10-26 16:50 +07 — T-PAYMENT-ENTITLEMENT-RECOVERY bảo đảm mở khóa sau thanh toán
+
+Loại: Payment Reliability + Entitlement Recovery
+
+Đã làm:
+
+- Xác định root cause kép: nhánh PayOS làm rơi query hồ sơ Thần số học, còn UI success chỉ dựa vào purchase `confirmed` dù entitlement có thể chưa được tạo.
+- Lưu `returnQuery` trong payment context cục bộ, chuyển tiếp qua checkout/success và khôi phục khi PayOS quay lại cùng phiên; không gửi họ tên/ngày sinh sang PayOS để tính tiền hoặc cấp quyền.
+- `/api/payment/check` giờ tự cấp bù entitlement idempotent cho purchase confirmed cũ, kiểm tra quyền sau recovery và tạm trả `confirming` nếu quyền chưa sẵn sàng.
+- Checkout và success chỉ công nhận hoàn tất khi API trả đồng thời `status: confirmed` và `entitlementGranted: true`.
+- Sắp xếp lại Next.js webhook và Cloudflare Payment Worker: grant entitlement trước khi update purchase confirmed; lỗi grant trả `500`, xóa processing lock khi có thể và cho PayOS retry.
+- Nhánh webhook idempotent không còn thoát sớm: đơn confirmed vẫn được bảo đảm entitlement tồn tại.
+- Bỏ phụ thuộc composite index trong truy vấn danh sách entitlement chính; vẫn lọc active và sắp xếp mới nhất ở server.
+- Cập nhật data contract, tài liệu module payment và mitigation cho `R-003`.
+
+Không làm:
+
+- Không thay đổi pricing, amount validation, chữ ký PayOS, quyền sở hữu purchase, Firestore rules hoặc logic luận giải.
+- Không thêm dependency, không sửa/xóa hai file Word chưa tracked của user và không deploy production.
+
+Kiểm tra:
+
+- `npm run typecheck` — pass.
+- `npm run lint` — pass.
+- `npm run build` — pass; Next.js tạo đủ 48 route.
+- TypeScript Payment Worker (`npm exec tsc -- --noEmit --project workers/payment/tsconfig.json`) — pass.
+- `git diff --check` — pass trước cập nhật tài liệu; chạy lại ở quality gate cuối.
+
+Rủi ro còn lại:
+
+- Đơn production hiện tại chỉ được self-heal sau khi bản sửa được deploy và user mở lại success/check bằng đúng tài khoản đã thanh toán.
+- Context hồ sơ của đơn đã hoàn tất trước bản sửa có thể đã bị browser xóa; user có thể phải nhập lại đúng một lần, nhưng entitlement đã phục hồi thì báo cáo phải mở full.
+- Task giữ trạng thái `Review`; cần production smoke PayOS bằng đơn test và code review độc lập trước khi `Done`/đóng `R-003`.
+
 ## 2026-10-26 13:25 +07 — T-PAYMENT-AUTH-CARD minh bạch tài khoản nhận báo cáo
 
 Loại: Payment UX + Auth

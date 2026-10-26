@@ -3,6 +3,10 @@ export const runtime = "nodejs";
 
 import { createError } from "@banmenh/shared";
 import { NextResponse } from "next/server";
+import {
+  checkEntitlement,
+  grantEntitlementFromPurchase,
+} from "../../../../lib/entitlements/service";
 import { adminAuth } from "../../../../lib/firebase/admin";
 import { firestorePurchaseRepository } from "../../../../lib/firestore";
 
@@ -63,12 +67,32 @@ export async function GET(request: Request) {
     );
   }
 
+  let responseStatus = purchase.status;
+  let entitlementGranted = false;
+
+  // Purchase confirmed là bằng chứng thanh toán phía server. Luôn bảo đảm quyền
+  // tương ứng tồn tại trước khi client được phép hiển thị màn hình thành công.
+  // Nhánh này đồng thời tự phục hồi các đơn cũ đã confirmed nhưng webhook bỏ sót quyền.
+  if (purchase.status === "confirmed") {
+    try {
+      await grantEntitlementFromPurchase(purchase, { userId: uid });
+      entitlementGranted = (
+        await checkEntitlement(uid, purchase.productCode)
+      ).has;
+      if (!entitlementGranted) responseStatus = "confirming";
+    } catch (error) {
+      console.error(`[payment/check] entitlement recovery failed for orderId=${orderId}:`, error);
+      responseStatus = "confirming";
+    }
+  }
+
   return NextResponse.json({
     orderId: purchase.orderId,
-    status: purchase.status,
+    status: responseStatus,
     amount: purchase.amount,
     productCode: purchase.productCode,
     expiresAt: purchase.expiresAt ?? null,
     confirmedAt: purchase.confirmedAt ?? null,
+    entitlementGranted,
   });
 }

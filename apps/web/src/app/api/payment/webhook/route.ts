@@ -98,12 +98,38 @@ export async function POST(request: Request) {
     amount: number;
     status: string;
     createdAt?: string;
+    confirmedAt?: string;
+    providerRef?: string;
     voucherCode?: string;
     processingAt?: number;
   };
 
-  // 3. Idempotency: Nếu đã confirmed trước đó, trả 200 ngay lập tức
+  const now = new Date().toISOString();
+  const providerRef = String(data.transactionId ?? data.reference ?? purchase.providerRef ?? "");
+  const fullPurchase: Purchase = {
+    id: orderId,
+    orderId,
+    userId: purchase.userId,
+    module: purchase.module,
+    productCode: purchase.productCode,
+    amount: purchase.amount,
+    status: "confirmed",
+    createdAt: purchase.createdAt || now,
+    confirmedAt: purchase.confirmedAt || now,
+    provider: "payos",
+    currency: "VND",
+    providerRef,
+    voucherCode: purchase.voucherCode,
+  };
+
+  // 3. Idempotency + self-heal: đơn confirmed vẫn phải bảo đảm entitlement tồn tại.
   if (purchase.status === "confirmed") {
+    try {
+      await grantEntitlementFromPurchase(fullPurchase, { userId: purchase.userId });
+    } catch (err) {
+      console.error(`[payment/webhook] Failed to recover entitlement for orderId=${orderId}:`, err);
+      return NextResponse.json({ ok: false, error: "Entitlement error" }, { status: 500 });
+    }
     return NextResponse.json({ ok: true, idempotent: true, orderId });
   }
 
@@ -111,7 +137,10 @@ export async function POST(request: Request) {
   const LOCK_TTL_MS = 30_000;
   const processingAt = Number(purchase.processingAt ?? 0);
   if (processingAt && Date.now() - processingAt < LOCK_TTL_MS) {
-    return NextResponse.json({ ok: true, processing: true, orderId });
+    return NextResponse.json(
+      { ok: false, processing: true, orderId },
+      { status: 503 },
+    );
   }
 
   try {
@@ -130,10 +159,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, ack: true, note: "amount_mismatch" });
   }
 
-  // 6. Cập nhật trạng thái purchase thành confirmed
-  const now = new Date().toISOString();
-  const providerRef = String(data.transactionId ?? data.reference ?? "");
+  // 6. Cấp quyền trước khi công bố đơn confirmed. Nếu bước này lỗi, PayOS
+  // nhận 500 và có thể retry; purchase chưa bị kẹt ở trạng thái thành công giả.
+  try {
+    await grantEntitlementFromPurchase(fullPurchase, { userId: purchase.userId });
+    console.log(`[payment/webhook] Granted entitlement for userId=${purchase.userId} orderId=${orderId}`);
+  } catch (err) {
+    console.error(`[payment/webhook] Failed to grant entitlement for orderId=${orderId}:`, err);
+    try {
+      await purchaseRef.update({ processingAt: 0 });
+    } catch {
+      // Retry sau vẫn tự phục hồi khi lock hết hạn.
+    }
+    return NextResponse.json({ ok: false, error: "Entitlement error" }, { status: 500 });
+  }
 
+  // 7. Chỉ đánh dấu confirmed sau khi quyền đã được bảo đảm.
   try {
     await purchaseRef.update({
       status: "confirmed",
@@ -143,29 +184,6 @@ export async function POST(request: Request) {
   } catch (err) {
     console.error(`[payment/webhook] Failed to update purchase status for orderId=${orderId}:`, err);
     return NextResponse.json({ ok: false, error: "Database error" }, { status: 500 });
-  }
-
-  // 7. Cấp quyền truy cập (Entitlement) cho người dùng
-  try {
-    const fullPurchase: Purchase = {
-      id: orderId,
-      orderId,
-      userId: purchase.userId,
-      module: purchase.module,
-      productCode: purchase.productCode,
-      amount: purchase.amount,
-      status: "confirmed",
-      createdAt: purchase.createdAt || now,
-      confirmedAt: now,
-      provider: "payos",
-      currency: "VND",
-      providerRef,
-      voucherCode: purchase.voucherCode,
-    };
-    await grantEntitlementFromPurchase(fullPurchase, { userId: purchase.userId });
-    console.log(`[payment/webhook] Granted entitlement for userId=${purchase.userId} orderId=${orderId}`);
-  } catch (err) {
-    console.error(`[payment/webhook] Failed to grant entitlement for orderId=${orderId}:`, err);
   }
 
   // 8. Tăng lượt sử dụng voucher nếu có áp dụng

@@ -20,8 +20,15 @@ type CheckResponse = {
   productCode: string;
   expiresAt: string | null;
   confirmedAt: string | null;
+  entitlementGranted: boolean;
 };
 
+type PendingPaymentContext = {
+  orderId?: string;
+  returnQuery?: string;
+};
+
+const STORAGE_KEY = "banmenh-payment-pending";
 const MAX_POLLS = 20;
 const POLL_INTERVAL_MS = 3000;
 
@@ -43,13 +50,14 @@ function SuccessPanel({
   orderId,
   amount,
   voucherCode,
+  searchParams,
 }: {
   module: ProductModule;
   orderId: string | null;
   amount?: number;
   voucherCode?: string | null;
+  searchParams: URLSearchParams;
 }) {
-  const searchParams = useSearchParams();
   const { user } = useAuth();
   const hasInput = hasReportInput(searchParams);
   const reportHref = useMemo(
@@ -111,13 +119,43 @@ function SuccessPanel({
 export function PaymentSuccess({ module }: PaymentSuccessProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const searchParamsString = searchParams.toString();
   const orderId = searchParams.get("orderId");
   const freeUnlock = searchParams.get("freeUnlock") === "true";
   const voucherCode = searchParams.get("voucherCode");
   const [result, setResult] = useState<CheckResponse | null>(null);
   const [timedOut, setTimedOut] = useState(false);
   const [error, setError] = useState(false);
+  const [contextReady, setContextReady] = useState(false);
+  const [reportParams, setReportParams] = useState(
+    () => new URLSearchParams(searchParamsString),
+  );
   const pollCount = useRef(0);
+
+  useEffect(() => {
+    const restored = new URLSearchParams(searchParamsString);
+    if (!hasReportInput(restored) && orderId) {
+      try {
+        const raw = sessionStorage.getItem(STORAGE_KEY);
+        const pending = raw ? JSON.parse(raw) as PendingPaymentContext : null;
+        if (pending?.orderId === orderId && pending.returnQuery) {
+          const saved = new URLSearchParams(pending.returnQuery);
+          saved.forEach((value, key) => {
+            if (!restored.has(key)) restored.set(key, value);
+          });
+        }
+      } catch {
+        // Context cũ không hợp lệ không được làm hỏng bước xác nhận thanh toán.
+      }
+    }
+    setReportParams(restored);
+    setContextReady(true);
+  }, [orderId, searchParamsString]);
+
+  useEffect(() => {
+    if (!contextReady || (!freeUnlock && result?.status !== "confirmed")) return;
+    sessionStorage.removeItem(STORAGE_KEY);
+  }, [contextReady, freeUnlock, result?.status]);
 
   useEffect(() => {
     if (freeUnlock) return;
@@ -131,7 +169,11 @@ export function PaymentSuccess({ module }: PaymentSuccessProps) {
         const data = await fetchWithAuth<CheckResponse>(
           `/api/payment/check?orderId=${encodeURIComponent(orderId)}`,
         );
-        if (["confirmed", "failed", "expired"].includes(data.status)) {
+        if (
+          (data.status === "confirmed" && data.entitlementGranted) ||
+          data.status === "failed" ||
+          data.status === "expired"
+        ) {
           setResult(data);
           return;
         }
@@ -154,10 +196,17 @@ export function PaymentSuccess({ module }: PaymentSuccessProps) {
 
   return (
     <PageShell title="Thanh toán" showBack={false} containerWidth="narrow">
-      {freeUnlock ? (
-        <SuccessPanel module={module} orderId={orderId} amount={0} voucherCode={voucherCode} />
+      {!contextReady ? <LoadingState message="Đang khôi phục báo cáo..." /> : null}
+      {freeUnlock && contextReady ? (
+        <SuccessPanel
+          module={module}
+          orderId={orderId}
+          amount={0}
+          voucherCode={voucherCode}
+          searchParams={reportParams}
+        />
       ) : null}
-      {!freeUnlock && !result && !timedOut && !error ? (
+      {contextReady && !freeUnlock && !result && !timedOut && !error ? (
         <LoadingState message="Đang xác nhận thanh toán..." />
       ) : null}
       {timedOut ? (
@@ -177,7 +226,12 @@ export function PaymentSuccess({ module }: PaymentSuccessProps) {
         />
       ) : null}
       {result?.status === "confirmed" ? (
-        <SuccessPanel module={module} orderId={result.orderId} amount={result.amount} />
+        <SuccessPanel
+          module={module}
+          orderId={result.orderId}
+          amount={result.amount}
+          searchParams={reportParams}
+        />
       ) : null}
       {result?.status === "failed" || result?.status === "expired" ? (
         <ErrorState

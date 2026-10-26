@@ -206,10 +206,17 @@ Response:
   ok: true,
   orderId: string,
   status: "pending" | "confirming" | "confirmed" | "failed" | "expired",
+  entitlementGranted: boolean,
   entitlementId?: string,
   unlockUrl?: string
 }
 ```
+
+Quy tắc nhất quán:
+
+- API chỉ trả `status: "confirmed"` cho client sau khi entitlement tương ứng đã tồn tại.
+- Nếu purchase đã `confirmed` nhưng quyền bị thiếu, endpoint phải thử cấp lại quyền theo cách idempotent và tạm trả `status: "confirming"` khi recovery chưa thành công.
+- Client không được hiển thị màn hình kích hoạt thành công nếu `entitlementGranted !== true`.
 
 ### `POST /api/payment/webhook`
 

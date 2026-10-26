@@ -42,6 +42,36 @@ Done        Đã hoàn tất và đối chiếu đủ điều kiện done
 
 ## Ad-hoc - Audit Fixes
 
+### T-PAYMENT-ENTITLEMENT-RECOVERY - Bảo đảm mở khóa báo cáo sau thanh toán
+
+Status: Review
+
+Bối cảnh:
+
+- Trang thành công hiện chỉ kiểm tra purchase `confirmed`, chưa bảo đảm entitlement VIP đã được tạo.
+- Nhánh PayOS làm rơi query hồ sơ Thần số học nên CTA sau thanh toán quay về form nhập liệu.
+- Webhook đánh dấu purchase `confirmed` trước khi grant entitlement; lỗi grant có thể khiến webhook retry bị bỏ qua vĩnh viễn.
+
+Phạm vi:
+
+- Giữ context báo cáo xuyên suốt payment setup, checkout và success mà không gửi PII vào payload thanh toán PayOS.
+- Chỉ hiển thị thành công khi entitlement đã được bảo đảm; tự phục hồi entitlement cho purchase confirmed cũ.
+- Sắp xếp lại webhook để entitlement failure còn retry được và nhánh idempotent có thể tự chữa quyền bị thiếu.
+- Không thay đổi pricing, chữ ký PayOS, amount validation hoặc quyền sở hữu purchase.
+
+AI Tools Used:
+
+- Codex: điều tra root cause, triển khai recovery và chạy quality gate.
+
+Kết quả review nội bộ:
+
+- Context hồ sơ được giữ cục bộ qua setup → checkout → success; CTA thành công quay về đúng `/than-so-hoc/result/details` với input ban đầu.
+- `/api/payment/check` tự cấp bù entitlement cho purchase confirmed cũ và chỉ trả `confirmed` khi đã xác minh quyền tồn tại.
+- Cả Next.js webhook và Payment Worker đều grant entitlement trước khi đánh dấu purchase confirmed; nhánh idempotent tự chữa quyền thiếu và lỗi grant trả non-2xx để còn retry.
+- Client checkout/success yêu cầu đồng thời `status=confirmed` và `entitlementGranted=true`.
+- Truy vấn quyền theo user không còn phụ thuộc composite index Firestore ở đường đọc chính.
+- Chờ production deploy/smoke với order thật và code review độc lập trước khi chuyển `Done`.
+
 ### T-PAYMENT-AUTH-CARD - Minh bạch tài khoản nhận báo cáo trên màn hình thanh toán
 
 Status: Review

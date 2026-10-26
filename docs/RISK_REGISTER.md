@@ -12,7 +12,7 @@
 |---|---|---|---|---|---|---|
 | R-001 | KB thần số học bị public trong bundle/static asset | KB/Security | Critical | Open | Codex/User | Chỉ lưu KB private backend, smoke test URL public |
 | R-002 | Secret/admin token bị commit vào repo | Security | Critical | Open | User/Codex | Secret scanning, không ghi secret vào docs, dùng env/secret store |
-| R-003 | Thanh toán thành công nhưng không unlock entitlement | Payment | High | Open | Codex | Idempotent webhook, verify amount/order/user/module |
+| R-003 | Thanh toán thành công nhưng không unlock entitlement | Payment | High | Open | Codex | Grant entitlement trước khi xác nhận purchase; `/api/payment/check` self-heal đơn confirmed; chỉ hiển thị success khi `entitlementGranted=true`; đóng sau production smoke |
 | R-004 | Webhook bị replay hoặc giả mạo | Payment/Security | High | Open | Codex | Verify checksum, order status, amount, idempotency |
 | R-005 | V2 vô tình phụ thuộc/copy lại code hoặc hạ tầng ngoài scope | Architecture/Process | High | Open | Codex/User | V2 dùng project, DB/storage, worker và payment boundary mới; không copy code/hạ tầng ngoài scope |
 | R-006 | Nội dung Tarot nói quá claim hoặc gây hiểu nhầm | Legal/Content | Medium | Open | User/Claude | Content guideline, disclaimer, không cam kết chắc chắn |

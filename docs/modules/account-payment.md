@@ -40,6 +40,9 @@ MVP core
 - Legacy routes `/payment/setup`, `/payment/success`, `/payment/cancel` được giữ bằng wrapper/redirect để không làm gãy link cũ.
 - Option C hybrid: UI payment dùng shared components (`PaymentSetup`, `PaymentSuccess`, `PaymentCancel`), còn route wrapper thuộc từng module để URL user-facing khớp hành trình sản phẩm.
 - `/api/payment/create` vẫn là backend boundary tính amount từ `packages/shared/src/pricing.ts`; PayOS return/cancel URL được sinh từ `product.module`, không từ input amount/order URL phía client.
+- Context hồ sơ dùng để quay lại báo cáo được giữ cục bộ xuyên suốt setup → checkout → success, không gửi PII này sang PayOS và không dùng nó để tính tiền/cấp quyền.
+- Trạng thái payment thành công trên UI yêu cầu đồng thời purchase `confirmed` và entitlement đã được bảo đảm. `GET /api/payment/check` được phép self-heal entitlement theo purchase confirmed thuộc đúng user.
+- Webhook phải cấp entitlement idempotent trước khi công bố purchase `confirmed`; webhook lặp lại trên đơn confirmed vẫn kiểm tra/cấp bù quyền thay vì thoát sớm.
 
 ## Dependencies
 
