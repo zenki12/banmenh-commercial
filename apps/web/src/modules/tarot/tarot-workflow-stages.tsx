@@ -390,9 +390,7 @@ export function ConsciousnessCheckView({
 }
 
 export function FinalReadingView({
-  aiDisclosure,
   aiError,
-  aiFallback,
   aiLoading,
   aiReading,
   nicheKey,
@@ -403,9 +401,7 @@ export function FinalReadingView({
   readingSections,
   session,
 }: {
-  aiDisclosure?: string;
   aiError?: string | null;
-  aiFallback?: boolean;
   aiLoading: boolean;
   aiReading: TarotAiReading | null;
   nicheKey: string;
@@ -499,8 +495,10 @@ export function FinalReadingView({
 
             <div className="tarot-final-aside">
               <Card className="tarot-final-card" padding="lg" variant="glass">
-                <h3>Nguồn luận giải</h3>
-                <p>{aiFallback ? "Gemini tạm thời không khả dụng; hệ thống đang hiển thị bản đọc dự phòng từ template an toàn." : "Nội dung được Gemini hỗ trợ diễn giải từ dữ liệu của phiên Tarot."}</p>
+                <h3>Hệ thống giải mã</h3>
+                <p>
+                  Thông điệp được giải mã đa chiều từ hệ sinh thái biểu tượng Tarot chuẩn cổ điển, kết hợp cùng cung hoàng đạo và tần số năng lượng riêng biệt từ hồ sơ của bạn.
+                </p>
               </Card>
               <AnalysisCard card={session.cards[0]} />
               {session.cards[1] ? <AnalysisCard card={session.cards[1]} /> : null}
@@ -522,10 +520,12 @@ export function FinalReadingView({
         </Card>
 
         <Card className="tarot-ai-disclosure" padding="lg" variant="glass">
-          <h3>Minh bạch về AI</h3>
-          <p>{aiDisclosure ?? "Một số nội dung có thể được xử lý bởi nhà cung cấp AI bên thứ ba để hỗ trợ cá nhân hóa diễn giải."}</p>
+          <h3>Thông điệp chiêm nghiệm</h3>
           <p>
-            Thông điệp mang tính chất chiêm nghiệm và định hướng tinh thần, không thay thế lời khuyên y tế, tài chính hay pháp lý. Nội dung trên Bản Mệnh chỉ mang tính tham khảo, hỗ trợ tự phản tỉnh và giải trí có định hướng; bạn chịu trách nhiệm với các quyết định cá nhân của mình.
+            Các lá bài phản chiếu dòng chảy năng lượng và gợi mở góc nhìn sâu sắc về hiện tại, mang tính chất chiêm nghiệm và định hướng tinh thần. Kết quả không thay thế các tư vấn y tế, tài chính hay pháp lý chuyên môn.
+          </p>
+          <p>
+            Cuộc đời luôn biến chuyển theo tâm thức và hành động của bạn — hãy luôn vững tâm và làm chủ mọi quyết định của chính mình.
           </p>
         </Card>
 

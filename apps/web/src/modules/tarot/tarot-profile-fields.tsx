@@ -1,4 +1,12 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { Card } from "../../components/ui";
+import {
+  deleteSavedProfile,
+  getSavedProfiles,
+  type TarotSavedProfile,
+} from "./tarot-saved-profiles";
 
 type TarotProfileFieldsProps = {
   dob: string;
@@ -17,7 +25,24 @@ export function TarotProfileFields({
   onGenderChange,
   onNameChange,
 }: TarotProfileFieldsProps) {
+  const [savedProfiles, setSavedProfiles] = useState<TarotSavedProfile[]>([]);
   const today = new Date().toISOString().slice(0, 10);
+
+  useEffect(() => {
+    setSavedProfiles(getSavedProfiles());
+  }, []);
+
+  function selectProfile(profile: TarotSavedProfile) {
+    onNameChange(profile.name);
+    onDobChange(profile.dob);
+    onGenderChange(profile.gender);
+  }
+
+  function startNewProfile() {
+    onNameChange("");
+    onDobChange("");
+    onGenderChange("");
+  }
 
   return (
     <Card className="tarot-profile-card" padding="md" variant="glass">
@@ -32,6 +57,42 @@ export function TarotProfileFields({
           <circle cx="24" cy="24" r="4" />
         </svg>
       </div>
+      {savedProfiles.length > 0 ? (
+        <div className="tarot-saved-profiles" aria-label="Hồ sơ Tarot đã lưu">
+          <div className="tarot-saved-profile-list">
+            {savedProfiles.map((profile) => {
+              const dateLabel = profile.dob.match(/^\d{4}-(\d{2})-(\d{2})$/);
+              const label = `✦ ${profile.name || "Hồ sơ"}${dateLabel ? ` (${dateLabel[2]}/${dateLabel[1]})` : ""}`;
+
+              return (
+                <div className="tarot-saved-profile-chip" key={profile.id}>
+                  <button
+                    aria-pressed={
+                      name === profile.name && dob === profile.dob && gender === profile.gender
+                    }
+                    className="tarot-saved-profile-select"
+                    onClick={() => selectProfile(profile)}
+                    type="button"
+                  >
+                    {label}
+                  </button>
+                  <button
+                    aria-label={`Xóa hồ sơ ${profile.name || "đã lưu"}`}
+                    className="tarot-saved-profile-delete"
+                    onClick={() => setSavedProfiles(deleteSavedProfile(profile.id))}
+                    type="button"
+                  >
+                    <span aria-hidden="true">×</span>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+          <button className="tarot-saved-profile-new" onClick={startNewProfile} type="button">
+            + Nhập mới
+          </button>
+        </div>
+      ) : null}
       <p className="tarot-profile-intro">
         Cung cấp thông tin giúp vũ trụ định vị bản mệnh, cung hoàng đạo và cá nhân hóa sâu sắc lời luận giải.
       </p>
@@ -88,7 +149,7 @@ export function TarotProfileFields({
           <path d="M7 10V7a5 5 0 0 1 10 0v3m-11 0h12v10H6V10Z" />
         </svg>
         <p>
-          Nếu để trống, hệ thống sẽ xưng hô là “Bạn”. Khi hoàn tất trải bài, dữ liệu đã nhập cùng câu hỏi và các lá bài sẽ được Google Gemini xử lý để tạo nội dung bằng AI.
+          Nếu để trống, hệ thống sẽ xưng hô là “Bạn”. Mọi thông tin chỉ phục vụ cho việc định vị tần số năng lượng và cá nhân hóa trải nghiệm của phiên trải bài này.
         </p>
       </div>
     </Card>

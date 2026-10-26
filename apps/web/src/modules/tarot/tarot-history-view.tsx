@@ -142,7 +142,7 @@ function TarotHistoryDetail({
       <div className="tarot-history-detail-heading">
         <time dateTime={entry.timestamp}>{formatTimestamp(entry.timestamp)}</time>
         <h3>{entry.question}</h3>
-        <p>{entry.themeLabel} · Trải {entry.spread} lá · {entry.source === "gemini" ? "Gemini hỗ trợ" : "Bản đọc dự phòng"}</p>
+        <p>{entry.themeLabel} · Trải {entry.spread} lá · {entry.source === "gemini" ? "Bản giải mã chuyên sâu" : "Bản giải mã nền tảng"}</p>
       </div>
 
       <Card className="tarot-history-reading-section" padding="md" variant="glass">

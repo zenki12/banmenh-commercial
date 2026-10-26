@@ -60,6 +60,90 @@
   max-width: 43rem;
 }
 
+.tarot-saved-profiles {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 0.9rem;
+}
+
+.tarot-saved-profile-list {
+  display: flex;
+  flex: 1 1 24rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.tarot-saved-profile-chip {
+  align-items: stretch;
+  background: color-mix(in srgb, var(--bm-gold) 10%, var(--bm-ink));
+  border: 1px solid color-mix(in srgb, var(--bm-gold) 30%, transparent);
+  border-radius: 999px;
+  display: inline-flex;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.tarot-saved-profile-select,
+.tarot-saved-profile-delete,
+.tarot-saved-profile-new {
+  color: var(--bm-text-main);
+  cursor: pointer;
+  font: inherit;
+}
+
+.tarot-saved-profile-select,
+.tarot-saved-profile-delete {
+  background: transparent;
+  border: 0;
+}
+
+.tarot-saved-profile-select {
+  font-size: 0.76rem;
+  min-height: 2.75rem;
+  overflow-wrap: anywhere;
+  padding: 0.55rem 0.35rem 0.55rem 0.85rem;
+  text-align: left;
+}
+
+.tarot-saved-profile-delete {
+  color: var(--bm-text-soft);
+  font-size: 1.1rem;
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+  padding: 0;
+}
+
+.tarot-saved-profile-new {
+  background: transparent;
+  border: 1px dashed color-mix(in srgb, var(--bm-gold) 42%, transparent);
+  border-radius: 999px;
+  color: var(--bm-gold-light);
+  font-size: 0.76rem;
+  min-height: 2.75rem;
+  padding: 0.55rem 0.9rem;
+}
+
+.tarot-saved-profile-select:hover,
+.tarot-saved-profile-delete:hover,
+.tarot-saved-profile-new:hover {
+  background: color-mix(in srgb, var(--bm-gold) 12%, transparent);
+}
+
+.tarot-saved-profile-select[aria-pressed="true"] {
+  color: var(--bm-gold-light);
+  font-weight: 650;
+}
+
+.tarot-saved-profile-select:focus-visible,
+.tarot-saved-profile-delete:focus-visible,
+.tarot-saved-profile-new:focus-visible {
+  outline: 2px solid var(--bm-gold-light);
+  outline-offset: -2px;
+}
+
 .tarot-profile-grid {
   display: grid;
   gap: 1rem;

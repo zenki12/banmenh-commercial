@@ -28,6 +28,7 @@ import {
 } from "./tarot-data";
 import { LandingView } from "./tarot-landing";
 import { useTarotProfileName } from "./tarot-profile-state";
+import { saveProfile } from "./tarot-saved-profiles";
 import {
   clearTarotHistory,
   createTarotHistoryEntry,
@@ -231,6 +232,9 @@ export function TarotExperience() {
       setUpgradeReason("daily_limit");
       return;
     }
+    if (profileName.trim() || profileDob.trim()) {
+      saveProfile({ name: profileName, dob: profileDob, gender: profileGender });
+    }
     const cleanQuestion = question.trim() || DEFAULT_QUESTION;
     setSession({ theme, themeLabel: getThemeLabel(theme), spread, question: cleanQuestion, cards: drawCards(spread) });
     setSelectedIndexes([]);
@@ -432,9 +436,7 @@ export function TarotExperience() {
       ) : null}
       {phase === "finalReading" && session ? (
         <FinalReadingView
-          aiDisclosure={aiResponse?.disclosure}
           aiError={aiError}
-          aiFallback={aiResponse?.fallback}
           aiLoading={aiLoading}
           aiReading={aiResponse?.reading ?? null}
           nicheKey={nicheKbKey}

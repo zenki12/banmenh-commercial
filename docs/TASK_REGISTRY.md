@@ -42,6 +42,34 @@ Done        Đã hoàn tất và đối chiếu đủ điều kiện done
 
 ## Ad-hoc - Audit Fixes
 
+### T-TAROT-PROFILES-AND-DISCLOSURE - Lưu hồ sơ năng lượng và chuẩn hóa nội dung Tarot
+
+Status: Review
+
+Bối cảnh:
+
+- Form Tarot cần cho phép lưu tối đa 5 hồ sơ gần nhất trên thiết bị để điền lại nhanh, đồng thời cho phép xóa từng hồ sơ.
+- Nội dung giao diện và API Tarot cần dùng văn phong giải mã/chiêm nghiệm thống nhất, không hiển thị tên nhà cung cấp hoặc thuật ngữ AI.
+
+Phạm vi:
+
+- Thêm helper localStorage cho danh sách hồ sơ Tarot, sắp xếp theo lần dùng gần nhất và giới hạn 5 hồ sơ.
+- Bổ sung chip chọn, xóa và nhập mới trong form hồ sơ; tự lưu hồ sơ khi bắt đầu phiên trải bài.
+- Chuẩn hóa disclosure ở UI kết quả và API Tarot, giữ nguyên disclaimer an toàn y tế/tài chính/pháp lý.
+- Tách file `tarot-daily-kb.ts` thành `tarot-daily-kb-major.ts` và `tarot-daily-kb-minor.ts` để tuân thủ giới hạn 600 dòng source-lint.
+
+AI Tools Used:
+
+- Codex: triển khai code, kiểm tra UI/accessibility và chạy các quality gate.
+
+Kết quả triển khai 2026-10-26:
+
+- Đã thêm localStorage helper lưu/cập nhật tối đa 5 hồ sơ Tarot gần nhất và hỗ trợ xóa từng hồ sơ.
+- Form hồ sơ có chip chọn nhanh, nút xóa có accessible label, nút nhập mới và tự lưu hồ sơ khi bắt đầu phiên trải bài.
+- Đã thay copy hiển thị Gemini/AI trong form, kết quả, lịch sử Tarot và disclosure API bằng nội dung giải mã/chiêm nghiệm; giữ disclaimer chuyên môn.
+- Đã tách `tarot-daily-kb.ts` thành 2 module Major (<190 dòng) và Minor (<460 dòng), toàn bộ lint/source-lint, typecheck và build đều pass 100%.
+- Chờ code review độc lập trước khi chuyển `Done`.
+
 ### T-NUMEROLOGY-PAYWALL-TEASER-RHYTHM - Tối ưu nhịp teaser báo cáo Thần số học
 
 Status: Review

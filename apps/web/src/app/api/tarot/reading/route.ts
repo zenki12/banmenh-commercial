@@ -21,7 +21,7 @@ import { consumeTarotReading } from "../../../../lib/tarot/quota";
 import { getLocalTarotCardAspectMeaning } from "../../../../lib/tarot/local-tarot-kb";
 
 const DISCLOSURE =
-  "Luận giải này được hỗ trợ bởi Google Gemini. Thông tin của phiên Tarot được gửi tới nhà cung cấp AI để tạo nội dung cá nhân hóa.";
+  "Thông điệp mang tính chất chiêm nghiệm và định hướng tinh thần, hỗ trợ bạn tự phản tỉnh và quan sát bản thân.";
 
 const kbMeaningResponseSchema = z.object({
   ok: z.literal(true),

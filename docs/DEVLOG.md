@@ -11,6 +11,44 @@
 
 ---
 
+## 2026-10-26 10:45 +07 — T-TAROT-PROFILES-AND-DISCLOSURE lưu hồ sơ và chuẩn hóa disclosure
+
+Loại: Tarot UX + Local persistence + Content
+
+Đã làm:
+
+- Thêm `tarot-saved-profiles.ts` để đọc, lưu/cập nhật và xóa tối đa 5 hồ sơ Tarot gần nhất trong localStorage key `bm_tarot_saved_profiles_v1`; dữ liệu lỗi được bỏ qua an toàn và không đồng bộ lên cloud.
+- Bổ sung danh sách chip chọn nhanh ngay dưới tiêu đề hồ sơ, nút xóa có nhãn truy cập, nút `+ Nhập mới`, layout tự xuống dòng và focus state rõ ràng.
+- Tự lưu tên/ngày sinh/giới tính khi người dùng bắt đầu phiên trải bài; hồ sơ trùng tên + ngày sinh được cập nhật thay vì nhân bản.
+- Thay toàn bộ copy hiển thị nhắc Google Gemini/AI trong form, màn hình kết quả và lịch sử Tarot bằng văn phong giải mã/chiêm nghiệm; cập nhật disclosure của API Tarot theo nội dung đã duyệt.
+- Không đổi provider nội bộ, schema response, quota, entitlement, pricing, payment hoặc Firestore rules; không thêm dependency và không deploy.
+
+Files đã sửa:
+
+- `apps/web/src/modules/tarot/tarot-saved-profiles.ts`
+- `apps/web/src/modules/tarot/tarot-profile-fields.tsx`
+- `apps/web/src/modules/tarot/TarotExperience.tsx`
+- `apps/web/src/modules/tarot/tarot-workflow-stages.tsx`
+- `apps/web/src/modules/tarot/tarot-history-view.tsx`
+- `apps/web/src/app/api/tarot/reading/route.ts`
+- `apps/web/src/styles/tarot-profile-fields.css`
+- `docs/TASK_REGISTRY.md`
+- `docs/DEVLOG.md`
+
+Kiểm tra:
+
+- `npm run typecheck` — pass.
+- `npm run build` — pass, 48 static/dynamic routes được tổng hợp thành công.
+- `git diff --check` — pass.
+- `npm run lint` — pass; đã tách `tarot-daily-kb.ts` thành `tarot-daily-kb-major.ts` (<190 dòng) và `tarot-daily-kb-minor.ts` (<460 dòng), tuân thủ 100% giới hạn 600 dòng source-lint.
+
+Rủi ro còn lại:
+
+- Tên, ngày sinh và giới tính được lưu cục bộ trên thiết bị theo yêu cầu sản phẩm; người dùng có thể xóa từng hồ sơ trên form. Cần cân nhắc bổ sung thao tác xóa toàn bộ trong một task riêng nếu policy riêng tư yêu cầu.
+- Task giữ trạng thái `Review`, chờ code review độc lập trước khi chuyển `Done`.
+
+---
+
 ## 2026-10-23 22:44 +07 — Production deploy commit d0c5d7f
 
 Loại: Production deployment
