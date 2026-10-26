@@ -70,9 +70,10 @@ function mapFirebaseError(err: unknown): AppError | null {
     return null;
   }
   if (code === "auth/unauthorized-domain") {
+    const currentHost = typeof window !== "undefined" ? window.location.hostname : "";
     return {
       ...createError("AUTH_INVALID_TOKEN"),
-      message: "Domain Vercel chưa được thêm vào Firebase Authorized domains.",
+      message: `Domain "${currentHost}" chưa được thêm vào Firebase Authorized domains.`,
     };
   }
   if (code === "auth/operation-not-allowed") {
@@ -155,20 +156,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signInWithGoogle() {
     setError(null);
     try {
-      const current = firebaseAuth.currentUser;
-      if (current?.isAnonymous) {
-        try {
-          await linkWithPopup(current, createGoogleProvider());
-          return true;
-        } catch (linkErr) {
-          const code = (linkErr as { code?: string })?.code;
-          if (code === "auth/credential-already-in-use" || code === "auth/email-already-in-use") {
-            await signInWithPopup(firebaseAuth, createGoogleProvider());
-            return true;
-          }
-          throw linkErr;
-        }
-      }
       await signInWithPopup(firebaseAuth, createGoogleProvider());
       return true;
     } catch (err) {
@@ -218,32 +205,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function linkAnonymousToGoogle() {
-    setError(null);
-    const current = firebaseAuth.currentUser;
-    if (!current) {
-      setError(createError("AUTH_REQUIRED"));
-      return false;
-    }
-    try {
-      await linkWithPopup(current, createGoogleProvider());
-      return true;
-    } catch (err) {
-      const code = (err as { code?: string })?.code;
-      // Nếu tài khoản Google này đã tồn tại trước đó, tự động chuyển sang đăng nhập vào tài khoản đó
-      if (code === "auth/credential-already-in-use" || code === "auth/email-already-in-use") {
-        try {
-          await signInWithPopup(firebaseAuth, createGoogleProvider());
-          return true;
-        } catch (signInErr) {
-          const mapped = mapFirebaseError(signInErr);
-          if (mapped) setError(mapped);
-          return false;
-        }
-      }
-      const mapped = mapFirebaseError(err);
-      if (mapped) setError(mapped);
-      return false;
-    }
+    return signInWithGoogle();
   }
 
   async function signOutFn() {
