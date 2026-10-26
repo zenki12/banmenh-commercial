@@ -42,6 +42,32 @@ Done        Đã hoàn tất và đối chiếu đủ điều kiện done
 
 ## Ad-hoc - Audit Fixes
 
+### T-PAYMENT-ZERO-VOUCHER-UX - Tránh tạo QR cho báo cáo đã mở và đơn voucher 0đ
+
+Status: Review
+
+Bối cảnh:
+
+- Trang thanh toán vẫn hiển thị CTA tạo QR cho report đã có entitlement, nên backend trả `ALREADY_EXISTS` và UI hiện lỗi không cần thiết.
+- Voucher 100% đã được backend hỗ trợ mở khóa trực tiếp nhưng CTA vẫn ghi “Tạo mã QR thanh toán 0đ”.
+
+Phạm vi:
+
+- Preflight entitlement report-specific trên Payment Setup và đưa người dùng về báo cáo đầy đủ nếu đã mở.
+- Khi tổng tiền bằng 0 sau voucher, hiển thị CTA mở khóa trực tiếp và dùng nguyên nhánh `freeUnlock` server-authoritative hiện có.
+- Không cho frontend tự cấp entitlement, không thay pricing, voucher validation hoặc payment transaction.
+
+AI Tools Used:
+
+- Codex: debug root cause, triển khai UI state/race handling và chạy quality gates.
+
+Kết quả:
+
+- Payment Setup kiểm tra entitlement theo `reportId`; report đã mở hiển thị “Xem báo cáo đầy đủ” và không gọi tạo QR.
+- Voucher đưa tổng tiền về 0đ hiển thị CTA “Mở khóa … ngay”; server tiếp tục validate voucher, tạo purchase 0đ và cấp entitlement qua nhánh `freeUnlock` hiện có.
+- `ALREADY_EXISTS` phát sinh do race được chuyển sang trạng thái đã mở thay vì ErrorState.
+- `npm run typecheck`, `npm run lint`, `npm run build` và `git diff --check` pass; chờ code review trước khi Done.
+
 ### T-CLEAN-PAYMENT-BRANDING - Chuẩn hóa ngôn từ thanh toán VietQR trên UI
 
 Status: Review

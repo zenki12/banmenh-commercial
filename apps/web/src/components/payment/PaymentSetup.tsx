@@ -8,7 +8,7 @@ import {
   type AppError,
 } from "@banmenh/shared";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { PageShell } from "../layout";
 import { Button, Card, ErrorState, UnauthorizedState } from "../ui";
 import { fetchWithAuth } from "../../lib/api/client";
@@ -41,6 +41,10 @@ type CreateResponse = {
   discountVnd?: number;
   expiresAt?: string;
   productCode?: string;
+};
+
+type EntitlementCheckResponse = {
+  has: boolean;
 };
 
 const STORAGE_KEY = "banmenh-payment-pending";
@@ -140,6 +144,39 @@ export function PaymentSetup({ productCode }: PaymentSetupProps) {
   const [creating, setCreating] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [createErrorState, setCreateErrorState] = useState<AppError | null>(null);
+  const [accessChecking, setAccessChecking] = useState(false);
+  const [alreadyUnlocked, setAlreadyUnlocked] = useState(false);
+  const reportId = searchParams.get("reportId") || undefined;
+
+  useEffect(() => {
+    let cancelled = false;
+    if (authLoading || !user || isAnonymous || product?.module !== "numerology" || !reportId) {
+      setAccessChecking(false);
+      setAlreadyUnlocked(false);
+      return;
+    }
+
+    setAccessChecking(true);
+    fetchWithAuth<EntitlementCheckResponse>("/api/entitlements/check", {
+      method: "POST",
+      body: JSON.stringify({ productCode: product.code, reportId }),
+    })
+      .then((result) => {
+        if (cancelled) return;
+        setAlreadyUnlocked(result.has);
+        if (result.has) setCreateErrorState(null);
+      })
+      .catch(() => {
+        if (!cancelled) setAlreadyUnlocked(false);
+      })
+      .finally(() => {
+        if (!cancelled) setAccessChecking(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading, isAnonymous, product?.code, product?.module, reportId, user]);
 
   if (!productCode) {
     return (
@@ -176,7 +213,9 @@ export function PaymentSetup({ productCode }: PaymentSetupProps) {
   const moduleSlug = moduleToSlug(selectedProduct.module);
   const validVoucher = voucherStatus === "valid" ? voucherResult : null;
   const totalAmount = validVoucher ? validVoucher.finalAmount : selectedProduct.priceVnd;
+  const isFreeUnlock = totalAmount === 0;
   const appliedCode = validVoucher ? validVoucher.voucher.code : voucherCode.trim().toUpperCase();
+  const reportDetailsHref = `/${moduleSlug}/result/details?${searchParams.toString()}`;
   const profileName =
     searchParams.get("name") ||
     searchParams.get("fullName") ||
@@ -244,6 +283,10 @@ export function PaymentSetup({ productCode }: PaymentSetupProps) {
       setCreateErrorState(createError("AUTH_REQUIRED"));
       return;
     }
+    if (alreadyUnlocked && selectedProduct.module === "numerology") {
+      router.push(reportDetailsHref);
+      return;
+    }
     setCreating(true);
     setCreateErrorState(null);
     try {
@@ -251,7 +294,7 @@ export function PaymentSetup({ productCode }: PaymentSetupProps) {
         method: "POST",
         body: JSON.stringify({
           productCode: selectedProduct.code,
-          reportId: searchParams.get("reportId") || undefined,
+          reportId,
           voucherCode: validVoucher ? appliedCode : undefined,
         }),
       });
@@ -279,7 +322,13 @@ export function PaymentSetup({ productCode }: PaymentSetupProps) {
       );
       router.push(`/payment/checkout?orderId=${encodeURIComponent(data.orderId)}`);
     } catch (err) {
-      setCreateErrorState(isAppError(err) ? err : createError("PAYMENT_FAILED"));
+      const appError = isAppError(err) ? err : createError("PAYMENT_FAILED");
+      if (appError.code === "ALREADY_EXISTS" && selectedProduct.module === "numerology") {
+        setAlreadyUnlocked(true);
+        setCreateErrorState(null);
+        return;
+      }
+      setCreateErrorState(appError);
     } finally {
       setCreating(false);
     }
@@ -498,9 +547,31 @@ export function PaymentSetup({ productCode }: PaymentSetupProps) {
             </Card>
           ) : null}
 
-          {isAuthenticated ? (
-            <Button fullWidth loading={creating} onClick={() => void handleConfirm()} size="lg" variant="primary">
-              Tạo mã QR thanh toán {formatPriceVnd(totalAmount)}
+          {isAuthenticated ? alreadyUnlocked && selectedProduct.module === "numerology" ? (
+            <Card padding="md" variant="default">
+              <div className="text-center">
+                <p className="font-bold text-[var(--bm-success-soft)]">Báo cáo đã được mở khóa trọn đời</p>
+                <p className="mt-2 text-sm leading-6 text-[var(--bm-text-soft)]">
+                  Bạn không cần thanh toán lại. Hãy tiếp tục đọc toàn bộ luận giải trong tài khoản này.
+                </p>
+                <Button className="mt-4" fullWidth href={reportDetailsHref} size="lg" variant="primary">
+                  Xem báo cáo đầy đủ
+                </Button>
+              </div>
+            </Card>
+          ) : (
+            <Button
+              fullWidth
+              loading={creating || accessChecking}
+              onClick={() => void handleConfirm()}
+              size="lg"
+              variant="primary"
+            >
+              {isFreeUnlock
+                ? selectedProduct.module === "numerology"
+                  ? "Mở khóa báo cáo ngay"
+                  : "Mở khóa gói Tarot ngay"
+                : `Tạo mã QR thanh toán ${formatPriceVnd(totalAmount)}`}
             </Button>
           ) : (
             <Button
@@ -514,8 +585,9 @@ export function PaymentSetup({ productCode }: PaymentSetupProps) {
             </Button>
           )}
           <p className="text-sm leading-6 text-[var(--bm-text-muted)]">
-            Hệ thống tự động kích hoạt ngay sau khi nhận được chuyển khoản hợp lệ. Mọi thông tin thanh
-            toán được bảo mật theo tiêu chuẩn ngân hàng.
+            {isFreeUnlock
+              ? "Voucher 100% sẽ được hệ thống xác nhận và kích hoạt quyền truy cập ngay, không cần tạo mã QR."
+              : "Hệ thống tự động kích hoạt ngay sau khi nhận được chuyển khoản hợp lệ. Mọi thông tin thanh toán được bảo mật theo tiêu chuẩn ngân hàng."}
           </p>
         </div>
       </Card>

@@ -11,6 +11,31 @@
 
 ---
 
+## 2026-10-26 20:55 +07 — T-PAYMENT-ZERO-VOUCHER-UX sửa CTA QR và voucher 0đ
+
+Loại: Payment UX + Entitlement Guard
+
+Đã làm:
+
+- Xác định lỗi ảnh chụp là backend trả `ALREADY_EXISTS` đúng thiết kế vì report đã được mở trọn đời, trong khi Payment Setup chưa preflight quyền và vẫn hiển thị nút tạo QR.
+- Thêm kiểm tra entitlement theo đúng `productCode + reportId` khi tài khoản mở trang thanh toán.
+- Report đã mở nay hiển thị thông báo quyền trọn đời và CTA “Xem báo cáo đầy đủ”; không gọi API tạo đơn hoặc tạo QR lại.
+- Nếu entitlement được cấp đồng thời ở tab khác, response `ALREADY_EXISTS` được xử lý như trạng thái thành công thay vì hiển thị lỗi.
+- Voucher hợp lệ giảm tổng tiền về 0đ đổi CTA thành “Mở khóa báo cáo ngay” hoặc “Mở khóa gói Tarot ngay”; chú thích nói rõ không cần QR.
+- Giữ nguyên nhánh backend `freeUnlock`: server validate voucher, tạo purchase 0đ, cấp entitlement và chuyển sang trang thành công.
+
+Không làm:
+
+- Không cho frontend tự cấp quyền, không bỏ kiểm tra voucher server-side, không đổi pricing, PayOS API, webhook hay payment transaction.
+- Không thêm dependency và không deploy production.
+
+Kiểm tra:
+
+- `npm run typecheck` — pass.
+- `npm run lint` — pass; `PaymentSetup.tsx` còn dưới giới hạn 600 dòng.
+- `npm run build` — pass.
+- `git diff --check` — pass.
+
 ## 2026-10-26 20:40 +07 — T-CLEAN-PAYMENT-BRANDING chuẩn hóa UI VietQR
 
 Loại: UI Copy + Payment Branding + Legal Copy
