@@ -43,6 +43,11 @@ Tài liệu này định nghĩa dữ liệu/API cốt lõi để frontend, backe
     birthDate: string
   },
   status: "free" | "unlocked",
+  purchaseId?: string,
+  entitlementId?: string,
+  unlockSource?: "payos" | "voucher_free" | "legacy" | "admin",
+  unlockedAt?: string,
+  reportVersion: string,
   createdAt: string,
   updatedAt: string
 }
@@ -57,10 +62,11 @@ Tài liệu này định nghĩa dữ liệu/API cốt lõi để frontend, backe
   userId?: string,
   module: "numerology" | "tarot",
   productCode: string,
+  reportId?: string,
   amount: number,
   currency: "VND",
   status: "pending" | "confirming" | "confirmed" | "failed" | "expired",
-  provider: "payos",
+  provider: "payos" | "voucher_free",
   providerRef?: string,
   voucherCode?: string,
   discountVnd?: number,
@@ -138,6 +144,14 @@ Tài liệu này định nghĩa dữ liệu/API cốt lõi để frontend, backe
     position: number
   }>,
   analysis?: string,
+  reading?: TarotAiReading,
+  source?: "gemini" | "template",
+  profileSnapshot?: {
+    name?: string,
+    dob?: string,
+    gender?: string
+  },
+  accessSource: "free" | "subscription" | "voucher",
   createdAt: string
 }
 ```
@@ -168,6 +182,18 @@ Tài liệu này định nghĩa dữ liệu/API cốt lõi để frontend, backe
 
 - Bắt buộc Firebase Bearer token của tài khoản không anonymous; token Anonymous trả `401 AUTH_REQUIRED` trước khi kiểm tra quota hoặc gọi provider.
 - Backend tăng quota free trong transaction trước khi tạo luận giải.
+- Sau khi tạo kết quả, backend lưu snapshot vào `tarot_readings` theo `userId`; lỗi lưu history không làm mất kết quả đang hiển thị.
+
+### `GET /api/tarot/history`
+
+- Bắt buộc tài khoản không anonymous.
+- Chỉ trả các lần trải bài thuộc `userId` hiện tại, gồm cả `free`, `subscription` và `voucher`.
+
+### `GET /api/reports`
+
+- Bắt buộc tài khoản không anonymous.
+- Trả tối đa 100 report Thần số học của owner, mới nhất trước.
+- Trạng thái `unlocked` được suy ra từ entitlement active có cùng `reportId`, không tin trạng thái từ client.
 - Trả `403 ENTITLEMENT_MISSING` cho spread 5/7/10/12 khi thiếu gói; trả `429 RATE_LIMITED` khi đã dùng 3 lượt free trong ngày.
 
 ### `POST /api/payment/create`

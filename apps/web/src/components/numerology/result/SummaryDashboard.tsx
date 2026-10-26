@@ -20,6 +20,7 @@ type SummaryDashboardProps = {
   report: NumerologyReport;
   userName: string;
   dob: string;
+  reportId?: string | null;
   showCta?: boolean;
 };
 
@@ -52,10 +53,16 @@ export function SummaryDashboard({
   report,
   userName,
   dob,
+  reportId,
   showCta = true,
 }: SummaryDashboardProps) {
   const searchParams = useSearchParams();
-  const detailUrl = detailsHref(searchParams);
+  const detailParams = useMemo(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (reportId) params.set("reportId", reportId);
+    return params;
+  }, [reportId, searchParams]);
+  const detailUrl = detailsHref(detailParams);
   const currentYear = report.personalYear.year;
   const lineData = useMemo(
     () => calcLineChartData(report, currentYear, -5, 5),

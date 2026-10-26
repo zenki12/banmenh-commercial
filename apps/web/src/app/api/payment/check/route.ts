@@ -8,7 +8,10 @@ import {
   grantEntitlementFromPurchase,
 } from "../../../../lib/entitlements/service";
 import { adminAuth } from "../../../../lib/firebase/admin";
-import { firestorePurchaseRepository } from "../../../../lib/firestore";
+import {
+  firestorePurchaseRepository,
+  firestoreReportRepository,
+} from "../../../../lib/firestore";
 
 function getBearerToken(request: Request): string | null {
   const auth = request.headers.get("Authorization");
@@ -76,9 +79,21 @@ export async function GET(request: Request) {
   if (purchase.status === "confirmed") {
     try {
       await grantEntitlementFromPurchase(purchase, { userId: uid });
-      entitlementGranted = (
-        await checkEntitlement(uid, purchase.productCode)
-      ).has;
+      const access = await checkEntitlement(uid, purchase.productCode, purchase.reportId);
+      entitlementGranted = access.has;
+      if (purchase.reportId && access.entitlement) {
+        await firestoreReportRepository.updateAccess(
+          purchase.reportId,
+          {
+            status: "unlocked",
+            purchaseId: purchase.id,
+            entitlementId: access.entitlement.id,
+            unlockSource: purchase.provider === "voucher_free" ? "voucher_free" : "payos",
+            unlockedAt: purchase.confirmedAt ?? access.entitlement.startsAt,
+          },
+          { userId: uid },
+        );
+      }
       if (!entitlementGranted) responseStatus = "confirming";
     } catch (error) {
       console.error(`[payment/check] entitlement recovery failed for orderId=${orderId}:`, error);

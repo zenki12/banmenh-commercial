@@ -30,6 +30,8 @@ export const purchaseSchema = z.object({
   module: moduleSchema,
   /** `productCode` đến từ `@banmenh/shared` pricing contract (T-0401). */
   productCode: z.string().min(1),
+  /** Báo cáo cụ thể được mở khóa; bắt buộc ở flow mua lẻ Thần số học mới. */
+  reportId: idSchema.optional(),
   amount: vndAmountSchema,
   currency: currencySchema,
   status: purchaseStatusSchema,

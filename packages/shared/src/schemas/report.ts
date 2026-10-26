@@ -27,6 +27,14 @@ export const reportModuleSchema = z.literal("numerology");
 export const reportStatusSchema = z.enum(["free", "unlocked"]);
 export type ReportStatus = z.infer<typeof reportStatusSchema>;
 
+export const reportUnlockSourceSchema = z.enum([
+  "payos",
+  "voucher_free",
+  "legacy",
+  "admin",
+]);
+export type ReportUnlockSource = z.infer<typeof reportUnlockSourceSchema>;
+
 export const reportSchema = z.object({
   id: idSchema,
   userId: idSchema.optional(),
@@ -34,6 +42,11 @@ export const reportSchema = z.object({
   inputHash: z.string().min(1),
   inputSnapshot: reportInputSnapshotSchema,
   status: reportStatusSchema,
+  purchaseId: idSchema.optional(),
+  entitlementId: idSchema.optional(),
+  unlockSource: reportUnlockSourceSchema.optional(),
+  unlockedAt: timestampSchema.optional(),
+  reportVersion: z.string().min(1).default("v1"),
   createdAt: timestampSchema,
   updatedAt: timestampSchema,
 });

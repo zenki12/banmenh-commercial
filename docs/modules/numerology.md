@@ -23,6 +23,11 @@ MVP core
 
 ## Data Model
 
+- Mỗi tài khoản có thể lưu nhiều `reports`; ID được suy ra ổn định từ `userId + inputHash` để cùng một hồ sơ không tạo bản trùng.
+- Report `free` xuất hiện trong lịch sử chưa mở khóa; report `unlocked` phải có entitlement active cùng `reportId` và được xem trọn đời.
+- Purchase/voucher cho gói mua lẻ bắt buộc gắn với `reportId`. Entitlement cũ chưa có `reportId` chỉ được claim cho một report.
+- Account chỉ lưu input snapshot/metadata cần thiết; nội dung KB vẫn ở private backend và được render qua API sau khi kiểm tra quyền.
+
 - Sẽ được chi tiết trong `docs/product-specs/data-contract.md`.
 - Mọi thay đổi data model phải cập nhật ADR nếu ảnh hưởng kiến trúc.
 

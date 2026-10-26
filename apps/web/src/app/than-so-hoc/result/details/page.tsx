@@ -13,6 +13,7 @@ type ReportResponse = {
   ok: true;
   report: NumerologyReportWithSections;
   unlocked: boolean;
+  reportId: string | null;
 };
 
 function buildSummaryHref(search: { toString: () => string }) {
@@ -26,6 +27,7 @@ function ResultDetailsContent() {
   const searchParams = useSearchParams();
   const [report, setReport] = useState<NumerologyReportWithSections | null>(null);
   const [unlocked, setUnlocked] = useState(false);
+  const [reportId, setReportId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<AppError | null>(null);
 
@@ -52,6 +54,7 @@ function ResultDetailsContent() {
       });
       setReport(response.report);
       setUnlocked(response.unlocked);
+      setReportId(response.reportId);
     } catch (err) {
       setError(isAppError(err) ? err : createError("INTERNAL_ERROR"));
     } finally {
@@ -70,7 +73,9 @@ function ResultDetailsContent() {
   if (!report) return <ErrorState code="KB_NOT_AVAILABLE" onRetry={fetchReport} />;
 
   const product = findProduct("numerology_single_report");
-  const query = searchParams.toString();
+  const paymentParams = new URLSearchParams(searchParams.toString());
+  if (reportId) paymentParams.set("reportId", reportId);
+  const query = paymentParams.toString();
   const paymentHref = query ? `/than-so-hoc/payment?${query}` : "/than-so-hoc/payment";
   const price = formatPriceVnd(product?.priceVnd ?? 0);
 

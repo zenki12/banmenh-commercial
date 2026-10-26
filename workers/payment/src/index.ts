@@ -84,6 +84,7 @@ async function ensureEntitlements(
         module: spec.module,
         type: spec.type,
         purchaseId: orderId,
+        reportId: spec.type === "single_report" ? purchase.reportId : undefined,
         status: "active",
         startsAt: now,
         expiresAt,

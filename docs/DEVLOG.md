@@ -11,6 +11,40 @@
 
 ---
 
+## 2026-10-26 17:30 +07 — T-ACCOUNT-MODULE-HISTORY lưu nhiều báo cáo theo tài khoản
+
+Loại: Account History + Report-scoped Entitlement
+
+Đã làm:
+
+- Chuyển quyền mua lẻ Thần số học từ cấp tài khoản sang cấp từng `reportId`: cùng một tài khoản có thể lưu nhiều hồ sơ, mỗi đơn PayOS hoặc voucher 100% chỉ mở đúng một báo cáo.
+- Tạo kho metadata báo cáo Thần số học theo `userId + inputHash`, lưu trạng thái locked/unlocked, nguồn mở khóa, purchase/entitlement và quyền truy cập trọn đời.
+- Bắt buộc đơn Thần số học xác minh report thuộc tài khoản trước khi tạo thanh toán; chặn mua lại báo cáo đã mở và đồng bộ trạng thái report sau webhook/payment recovery.
+- Thêm `/api/reports` và `/api/tarot/history` với kiểm tra Firebase Auth, owner-only read và server-only write; mỗi phiên Tarot hoàn tất được lưu cloud cùng loại lượt free/gói/voucher.
+- Hoàn thiện `/account`: tách “Lịch sử tra cứu chưa mở khóa”, “Báo cáo đã mua” và lịch sử Tarot; có loading/error/empty state và CTA đúng theo từng báo cáo.
+- Bổ sung cơ chế claim nguyên tử entitlement Thần số học cũ chưa có `reportId` khi người dùng nhập lại đúng hồ sơ, tránh bắt thanh toán lần hai.
+- Cập nhật shared schema, Firestore rules, data contract, tài liệu Numerology/Tarot/Account Payment và risk register.
+
+Không làm:
+
+- Không tự dựng lại tên/ngày sinh của các giao dịch cũ vì purchase trước đây không lưu input báo cáo; người dùng cần nhập lại đúng hồ sơ một lần để gắn quyền cũ.
+- Không migrate lịch sử Tarot localStorage cũ lên cloud, chưa làm route xem chi tiết/xóa/export lịch sử cloud.
+- Không thêm dependency, không thay pricing/chữ ký PayOS, không sửa hai file Word chưa tracked của user và không deploy production.
+
+Kiểm tra:
+
+- `npm run typecheck` — pass.
+- `npm exec tsc -- --noEmit --project workers/payment/tsconfig.json` — pass.
+- `npm run lint` — pass.
+- `npm run build` — pass, gồm route mới `/api/reports` và `/api/tarot/history`.
+- HTTP smoke: `/account` trả `200`; hai API lịch sử không có token trả `401` đúng thiết kế.
+- `git diff --check` — pass (chỉ có cảnh báo line ending LF/CRLF).
+
+Rủi ro còn lại:
+
+- Cần deploy Firestore rules trước khi test production và chạy smoke thật với Google Auth, PayOS webhook, voucher 100% và nhiều hồ sơ trên cùng tài khoản.
+- Lịch sử Tarot cloud chứa dữ liệu cá nhân; xóa/export và retention policy cần task riêng trước production.
+
 ## 2026-10-26 16:50 +07 — T-PAYMENT-ENTITLEMENT-RECOVERY bảo đảm mở khóa sau thanh toán
 
 Loại: Payment Reliability + Entitlement Recovery

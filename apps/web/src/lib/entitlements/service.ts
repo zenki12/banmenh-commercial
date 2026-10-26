@@ -10,6 +10,7 @@ import type {
 } from "@banmenh/shared";
 import { createError } from "@banmenh/shared";
 import {
+  claimLegacyEntitlementForReport,
   firestoreEntitlementRepository,
   firestorePurchaseRepository,
 } from "../firestore";
@@ -75,6 +76,7 @@ export async function grantEntitlementFromPurchase(
         userId,
         module: spec.module,
         type: spec.type,
+        reportId: spec.type === "single_report" ? purchase.reportId : undefined,
         purchaseId: purchase.id + (spec.idSuffix ?? ""),
         status: "active",
         startsAt: now.toISOString(),
@@ -99,6 +101,8 @@ export async function checkEntitlement(
   reportId?: string,
 ): Promise<{ has: boolean; entitlement?: Entitlement }> {
   const ctx: StorageContext = { userId };
+  const specs = PRODUCT_ENTITLEMENT_MAP[productCode];
+  if (!specs || specs.length === 0) return { has: false };
 
   if (reportId) {
     const found = await firestoreEntitlementRepository.findActiveForReport(
@@ -106,14 +110,30 @@ export async function checkEntitlement(
       reportId,
       ctx,
     );
-    if (found) return { has: true, entitlement: found };
+    if (
+      found &&
+      specs.some((spec) => spec.module === found.module && spec.type === found.type) &&
+      (!found.expiresAt || new Date(found.expiresAt) > new Date())
+    ) {
+      return { has: true, entitlement: found };
+    }
   }
-
-  const specs = PRODUCT_ENTITLEMENT_MAP[productCode];
-  if (!specs || specs.length === 0) return { has: false };
 
   const all = await firestoreEntitlementRepository.listByUser(userId, ctx);
   const spec = specs[0];
+  if (reportId) {
+    const legacy = all.find(
+      (e) =>
+        e.module === spec.module &&
+        e.type === spec.type &&
+        e.status === "active" &&
+        !e.reportId &&
+        (!e.expiresAt || new Date(e.expiresAt) > new Date()),
+    );
+    if (!legacy) return { has: false };
+    const claimed = await claimLegacyEntitlementForReport(legacy.id, userId, reportId);
+    return claimed ? { has: true, entitlement: claimed } : { has: false };
+  }
   const match = all.find(
     (e) =>
       e.module === spec.module &&

@@ -3,6 +3,7 @@
 
 import { z } from "zod";
 import { idSchema, timestampSchema } from "./common";
+import { tarotAiReadingSchema } from "./tarot-ai";
 
 /**
  * Spread hợp lệ theo data-contract.md: 1 | 3 | 5 | 7 | 10 | 12.
@@ -26,6 +27,15 @@ export const tarotCardSchema = z.object({
 });
 export type TarotCard = z.infer<typeof tarotCardSchema>;
 
+export const tarotAccessSourceSchema = z.enum(["free", "subscription", "voucher"]);
+export type TarotAccessSource = z.infer<typeof tarotAccessSourceSchema>;
+
+export const tarotProfileSnapshotSchema = z.object({
+  name: z.string().max(200).optional(),
+  dob: z.string().max(20).optional(),
+  gender: z.string().max(20).optional(),
+});
+
 export const tarotReadingSchema = z.object({
   id: idSchema,
   userId: idSchema.optional(),
@@ -35,6 +45,10 @@ export const tarotReadingSchema = z.object({
   spread: tarotSpreadSchema,
   cards: z.array(tarotCardSchema).min(1).max(12),
   analysis: z.string().max(10000).optional(),
+  reading: tarotAiReadingSchema.optional(),
+  source: z.enum(["gemini", "template"]).optional(),
+  profileSnapshot: tarotProfileSnapshotSchema.optional(),
+  accessSource: tarotAccessSourceSchema.default("free"),
   createdAt: timestampSchema,
 });
 

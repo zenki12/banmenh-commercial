@@ -7,10 +7,12 @@ import {
   tarotAiReadingRequestSchema,
   tarotAiReadingResponseSchema,
   type TarotAiReadingRequest,
+  type TarotAiReadingResponse,
 } from "@banmenh/shared";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { adminAuth } from "../../../../lib/firebase/admin";
+import { firestoreTarotReadingRepository } from "../../../../lib/firestore";
 import {
   buildFallbackReading,
   buildSensitiveTopicReading,
@@ -23,6 +25,39 @@ import { getLocalTarotCardAspectMeaning } from "../../../../lib/tarot/local-taro
 
 const DISCLOSURE =
   "Thông điệp mang tính chất chiêm nghiệm và định hướng tinh thần, hỗ trợ bạn tự phản tỉnh và quan sát bản thân.";
+
+async function persistReading(
+  uid: string,
+  input: TarotAiReadingRequest,
+  response: TarotAiReadingResponse,
+  hasPlan: boolean,
+): Promise<TarotAiReadingResponse> {
+  try {
+    await firestoreTarotReadingRepository.create(
+      {
+        userId: uid,
+        theme: input.themeLabel,
+        subTheme: input.nicheLabel,
+        question: input.question,
+        spread: input.spread,
+        cards: input.cards.map((card, index) => ({
+          cardId: card.id,
+          reversed: card.orientation === "reversed",
+          position: index,
+        })),
+        analysis: response.reading.overview,
+        reading: response.reading,
+        source: response.source,
+        profileSnapshot: input.profile,
+        accessSource: hasPlan ? "subscription" : "free",
+      },
+      { userId: uid },
+    );
+  } catch (error) {
+    console.error("[tarot/reading] Failed to persist reading history:", error);
+  }
+  return response;
+}
 
 const kbMeaningResponseSchema = z.object({
   ok: z.literal(true),
@@ -153,44 +188,48 @@ export async function POST(request: Request) {
     : buildFallbackReading(input);
 
   if (requiresImmediateSafetyFallback(input.question)) {
-    return NextResponse.json(tarotAiReadingResponseSchema.parse({
+    const response = tarotAiReadingResponseSchema.parse({
       ok: true,
       fallback: true,
       source: "template",
       reading: fallback,
       disclosure: DISCLOSURE,
-    }));
+    });
+    return NextResponse.json(await persistReading(uid, input, response, access.quota.hasPlan));
   }
 
   const providerCredential = process.env.GEMINI_API_KEY?.trim();
   if (!providerCredential) {
     console.error("[tarot/reading] Missing GEMINI_API_KEY");
-    return NextResponse.json(tarotAiReadingResponseSchema.parse({
+    const response = tarotAiReadingResponseSchema.parse({
       ok: true,
       fallback: true,
       source: "template",
       reading: fallback,
       disclosure: DISCLOSURE,
-    }));
+    });
+    return NextResponse.json(await persistReading(uid, input, response, access.quota.hasPlan));
   }
 
   try {
     const reading = await generateGeminiReading(input, providerCredential);
-    return NextResponse.json(tarotAiReadingResponseSchema.parse({
+    const response = tarotAiReadingResponseSchema.parse({
       ok: true,
       fallback: false,
       source: "gemini",
       reading,
       disclosure: DISCLOSURE,
-    }));
+    });
+    return NextResponse.json(await persistReading(uid, input, response, access.quota.hasPlan));
   } catch (err) {
     console.error("[tarot/reading] Gemini error:", err);
-    return NextResponse.json(tarotAiReadingResponseSchema.parse({
+    const response = tarotAiReadingResponseSchema.parse({
       ok: true,
       fallback: true,
       source: "template",
       reading: fallback,
       disclosure: DISCLOSURE,
-    }));
+    });
+    return NextResponse.json(await persistReading(uid, input, response, access.quota.hasPlan));
   }
 }

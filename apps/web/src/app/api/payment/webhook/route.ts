@@ -95,6 +95,7 @@ export async function POST(request: Request) {
     userId: string;
     module: "numerology" | "tarot";
     productCode: string;
+    reportId?: string;
     amount: number;
     status: string;
     createdAt?: string;
@@ -112,6 +113,7 @@ export async function POST(request: Request) {
     userId: purchase.userId,
     module: purchase.module,
     productCode: purchase.productCode,
+    reportId: purchase.reportId,
     amount: purchase.amount,
     status: "confirmed",
     createdAt: purchase.createdAt || now,

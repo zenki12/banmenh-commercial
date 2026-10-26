@@ -30,14 +30,10 @@ export const firestoreEntitlementRepository: EntitlementRepository = {
   },
 
   async findActiveForReport(userId, reportId, _ctx) {
-    const snap = await col()
-      .where("userId", "==", userId)
-      .where("reportId", "==", reportId)
-      .where("status", "==", "active")
-      .limit(1)
-      .get();
-    if (snap.empty) return null;
-    return fromFirestoreDoc<Entitlement>(snap.docs[0]);
+    const snap = await col().where("userId", "==", userId).limit(100).get();
+    return snap.docs
+      .map((doc) => fromFirestoreDoc<Entitlement>(doc))
+      .find((item) => item?.reportId === reportId && item.status === "active") ?? null;
   },
 
   async create(input, _ctx) {
@@ -62,3 +58,25 @@ export const firestoreEntitlementRepository: EntitlementRepository = {
     return updated;
   },
 };
+
+export async function claimLegacyEntitlementForReport(
+  entitlementId: string,
+  userId: string,
+  reportId: string,
+): Promise<Entitlement | null> {
+  const ref = col().doc(entitlementId);
+  return adminFirestore.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(ref);
+    const entitlement = fromFirestoreDoc<Entitlement>(snapshot);
+    if (
+      !entitlement ||
+      entitlement.userId !== userId ||
+      entitlement.status !== "active" ||
+      entitlement.reportId
+    ) {
+      return null;
+    }
+    transaction.update(ref, { reportId });
+    return { ...entitlement, reportId };
+  });
+}

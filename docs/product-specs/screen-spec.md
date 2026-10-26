@@ -136,7 +136,9 @@ MVP:
 
 - Hiển thị thông tin user.
 - Danh sách quyền đã mua.
-- Danh sách report Thần số học đã unlock.
+- Nhóm Thần số học gồm lịch sử tra cứu chưa mở khóa và danh sách báo cáo đã mua trọn đời; một tài khoản có thể lưu nhiều report cho nhiều người.
+- Báo cáo chưa mở có CTA thanh toán gắn đúng `reportId`; báo cáo đã mở có CTA đọc toàn bộ nội dung.
+- Nhóm Tarot hiển thị lịch sử phiên cloud của tài khoản, gồm lượt free và lượt dùng gói/voucher.
 - Logout.
 
 Không làm trong MVP:

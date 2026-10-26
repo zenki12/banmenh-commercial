@@ -17,12 +17,14 @@ import { fetchWithAuth } from "../../../lib/api/client";
 type ReportResponse = {
   ok: true;
   report: NumerologyReport;
+  reportId: string | null;
 };
 
 function ResultContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [report, setReport] = useState<NumerologyReport | null>(null);
+  const [reportId, setReportId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<AppError | null>(null);
 
@@ -47,6 +49,7 @@ function ResultContent() {
         body: JSON.stringify(input),
       });
       setReport(response.report);
+      setReportId(response.reportId);
     } catch (err) {
       setError(isAppError(err) ? err : createError("INTERNAL_ERROR"));
     } finally {
@@ -73,6 +76,7 @@ function ResultContent() {
       <SummaryDashboard
         dob={input.dob}
         report={report}
+        reportId={reportId}
         userName={input.fullName}
       />
       <p className="mt-10 text-sm leading-6 text-[var(--bm-text-muted)]">

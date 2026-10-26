@@ -251,6 +251,7 @@ export function PaymentSetup({ productCode }: PaymentSetupProps) {
         method: "POST",
         body: JSON.stringify({
           productCode: selectedProduct.code,
+          reportId: searchParams.get("reportId") || undefined,
           voucherCode: validVoucher ? appliedCode : undefined,
         }),
       });

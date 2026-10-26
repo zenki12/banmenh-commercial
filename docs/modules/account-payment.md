@@ -43,6 +43,9 @@ MVP core
 - Context hồ sơ dùng để quay lại báo cáo được giữ cục bộ xuyên suốt setup → checkout → success, không gửi PII này sang PayOS và không dùng nó để tính tiền/cấp quyền.
 - Trạng thái payment thành công trên UI yêu cầu đồng thời purchase `confirmed` và entitlement đã được bảo đảm. `GET /api/payment/check` được phép self-heal entitlement theo purchase confirmed thuộc đúng user.
 - Webhook phải cấp entitlement idempotent trước khi công bố purchase `confirmed`; webhook lặp lại trên đơn confirmed vẫn kiểm tra/cấp bù quyền thay vì thoát sớm.
+- Gói `numerology_single_report` mở đúng một `reportId`; purchase và entitlement mới đều phải mang `reportId` đó. Một tài khoản có thể sở hữu nhiều report độc lập.
+- Entitlement numerology legacy chưa có `reportId` được claim atomically cho một report khi owner mở lại hồ sơ, mỗi entitlement chỉ claim một lần.
+- `/account` nhóm dữ liệu theo module: report Thần số học `free`/locked, report `unlocked` trọn đời và cloud history Tarot free/paid.
 
 ## Dependencies
 

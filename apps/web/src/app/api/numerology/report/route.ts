@@ -7,11 +7,17 @@ import {
   type NarrativeKb,
   type NumerologyKb,
   type Phase,
+  type ReportUnlockSource,
 } from "@banmenh/shared";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { checkEntitlement } from "../../../../lib/entitlements/service";
 import { adminAuth } from "../../../../lib/firebase/admin";
+import {
+  firestorePurchaseRepository,
+  firestoreReportRepository,
+  numerologyInputHash,
+} from "../../../../lib/firestore";
 
 const bodySchema = z.object({
   fullName: z.string().trim().min(1).max(200),
@@ -98,9 +104,51 @@ export async function POST(request: Request) {
   }
 
   let unlocked = false;
+  let reportId: string | null = null;
   if (uid) {
     try {
-      unlocked = (await checkEntitlement(uid, "numerology_single_report")).has;
+      const inputSnapshot = {
+        fullName: parsed.data.fullName,
+        nickname: parsed.data.nickname,
+        gender: parsed.data.gender,
+        birthDate: parsed.data.dob,
+      };
+      const savedReport = await firestoreReportRepository.create(
+        {
+          userId: uid,
+          module: "numerology",
+          inputHash: numerologyInputHash(inputSnapshot),
+          inputSnapshot,
+          status: "free",
+          reportVersion: "v1",
+        },
+        { userId: uid },
+      );
+      reportId = savedReport.id;
+      const access = await checkEntitlement(uid, "numerology_single_report", reportId);
+      unlocked = access.has;
+      if (access.entitlement) {
+        const purchase = await firestorePurchaseRepository.getById(
+          access.entitlement.purchaseId,
+          { userId: uid },
+        );
+        const unlockSource: ReportUnlockSource = purchase?.provider === "voucher_free"
+          ? "voucher_free"
+          : purchase?.provider === "payos"
+            ? "payos"
+            : "legacy";
+        await firestoreReportRepository.updateAccess(
+          reportId,
+          {
+            status: "unlocked",
+            purchaseId: access.entitlement.purchaseId,
+            entitlementId: access.entitlement.id,
+            unlockSource,
+            unlockedAt: access.entitlement.startsAt,
+          },
+          { userId: uid },
+        );
+      }
     } catch (error) {
       console.warn("[numerology/report] entitlement check failed; serving free preview", error);
     }
@@ -129,6 +177,7 @@ export async function POST(request: Request) {
       ok: true,
       report: redactReportForAccess(report, unlocked),
       unlocked,
+      reportId,
     });
   }
 
@@ -142,6 +191,7 @@ export async function POST(request: Request) {
         ok: true,
         report: redactReportForAccess(report, unlocked),
         unlocked,
+        reportId,
       });
     }
 
@@ -173,7 +223,7 @@ export async function POST(request: Request) {
           ? { ...(responsePayload.report as Record<string, unknown>) }
           : responsePayload.report;
       return NextResponse.json(
-        { ...payload, report: redactReportForAccess(report, unlocked), unlocked },
+        { ...payload, report: redactReportForAccess(report, unlocked), unlocked, reportId },
         { status: response.status },
       );
     }
@@ -185,6 +235,7 @@ export async function POST(request: Request) {
       ok: true,
       report: redactReportForAccess(report, unlocked),
       unlocked,
+      reportId,
     });
   } finally {
     clearTimeout(timeout);

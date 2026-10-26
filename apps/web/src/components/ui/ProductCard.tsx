@@ -29,7 +29,7 @@ export function ProductCard({ product, onSelect }: ProductCardProps) {
       return;
     }
     if (product.code === "numerology_single_report") {
-      router.push("/than-so-hoc/payment");
+      router.push("/than-so-hoc");
       return;
     }
     router.push(`/payment/setup?productCode=${encodeURIComponent(product.code)}`);

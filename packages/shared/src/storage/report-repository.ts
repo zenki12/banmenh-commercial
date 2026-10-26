@@ -1,7 +1,7 @@
 // Storage adapter interface — implement bởi Worker/API, không phải frontend.
 // Mirror docs/product-specs/data-contract.md mục 2 — collection `reports`.
 
-import type { Report, ReportStatus } from "../schemas";
+import type { Report, ReportStatus, ReportUnlockSource } from "../schemas";
 import type { PaginationOptions, QueryResult, StorageContext } from "./common";
 
 export interface ReportRepository {
@@ -27,6 +27,17 @@ export interface ReportRepository {
   updateStatus(
     id: string,
     status: ReportStatus,
+    ctx: StorageContext,
+  ): Promise<Report>;
+  updateAccess(
+    id: string,
+    access: {
+      status: ReportStatus;
+      purchaseId?: string;
+      entitlementId?: string;
+      unlockSource?: ReportUnlockSource;
+      unlockedAt?: string;
+    },
     ctx: StorageContext,
   ): Promise<Report>;
 }

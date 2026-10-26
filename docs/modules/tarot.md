@@ -49,6 +49,10 @@ Spec ready for MVP planning
 
 ## Data Model
 
+- Mỗi lượt đọc hoàn tất khi đăng nhập được lưu server-side vào `tarot_readings`, gồm profile snapshot tối thiểu, spread, cards, kết quả và `accessSource` (`free`/`subscription`/`voucher`).
+- Local history tiếp tục là fallback trải nghiệm trong trình duyệt; `/account` đọc cloud history owner-only để dùng được trên nhiều thiết bị.
+- Kết quả đã tạo được xem là lịch sử của tài khoản; quyền tạo lượt VIP mới vẫn phụ thuộc entitlement gói Tarot hiện hành.
+
 - KB canonical: `E:\huyen hoc AI\test\kb\commercial\tarot_kb`.
 - Entry points: cards, daily, taxonomy, clarify, combo index, combo details, assets.
 - Data contract chi tiết sẽ nằm trong `docs/product-specs/data-contract.md` khi implement API.

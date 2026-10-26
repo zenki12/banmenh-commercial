@@ -42,6 +42,35 @@ Done        Đã hoàn tất và đối chiếu đủ điều kiện done
 
 ## Ad-hoc - Audit Fixes
 
+### T-ACCOUNT-MODULE-HISTORY - Lịch sử Thần số học/Tarot theo tài khoản
+
+Status: Review
+
+Bối cảnh:
+
+- Một tài khoản có thể tra cứu cho nhiều người; gói Thần số học 99.000đ chỉ mở một báo cáo cụ thể.
+- Account hiện chỉ hiển thị entitlement thô, còn khu vực báo cáo là placeholder và Tarot chỉ lưu localStorage.
+
+Phạm vi:
+
+- Lưu report metadata Thần số học theo `userId + inputHash`, phân biệt locked/unlocked và liên kết purchase/entitlement theo `reportId`.
+- Hiển thị riêng lịch sử chưa mua và báo cáo đã mua trọn đời; đơn PayOS, voucher 100% và đơn 0đ đều được tính là unlock hợp lệ.
+- Lưu lịch sử Tarot cloud cho tài khoản thật, gồm lượt free và lượt dùng gói, đồng thời giữ local history làm fallback UI.
+- Dashboard `/account` nhóm dữ liệu theo module và chỉ cho owner đọc.
+- Backfill entitlement cũ chưa có `reportId` bằng cơ chế claim idempotent khi user mở lại một report.
+
+AI Tools Used:
+
+- Codex: triển khai schema, Firestore adapters, API, payment binding, account UI và quality gate.
+
+Kết quả review nội bộ:
+
+- Mỗi hồ sơ Thần số học có `reportId` ổn định theo tài khoản và dữ liệu đầu vào; purchase/entitlement đơn lẻ chỉ mở đúng báo cáo đó.
+- Voucher giảm 100% và đơn PayOS đều liên kết `reportId`, cập nhật báo cáo đã mua và giữ quyền truy cập trọn đời.
+- `/account` đã tách lịch sử Thần số học chưa mở khóa/đã mua và lịch sử Tarot cloud theo module.
+- Entitlement Thần số học cũ chưa có `reportId` được claim nguyên tử khi người dùng nhập lại đúng hồ sơ; không thể tự khôi phục tên/ngày sinh cũ nếu dữ liệu đó chưa từng được lưu.
+- `npm run typecheck`, Payment Worker typecheck, `npm run lint`, `npm run build`, HTTP smoke và `git diff --check` đều pass; chờ kiểm thử Firebase/PayOS thực tế và code review độc lập trước khi Done.
+
 ### T-PAYMENT-ENTITLEMENT-RECOVERY - Bảo đảm mở khóa báo cáo sau thanh toán
 
 Status: Review

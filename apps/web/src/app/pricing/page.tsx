@@ -53,7 +53,7 @@ export default function PricingPage() {
 
   function handleSelectPlan(productCode: string) {
     if (productCode === "numerology_single_report") {
-      router.push("/than-so-hoc/payment");
+      router.push("/than-so-hoc");
       return;
     }
     router.push(`/payment/setup?productCode=${encodeURIComponent(productCode)}`);
