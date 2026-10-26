@@ -27,7 +27,7 @@ Loại: Payment UX + Entitlement Guard
 Không làm:
 
 - Không cho frontend tự cấp quyền, không bỏ kiểm tra voucher server-side, không đổi pricing, PayOS API, webhook hay payment transaction.
-- Không thêm dependency và không deploy production.
+- Không thêm dependency, không stage hai file Word chưa tracked và không đưa raw KB vào deployment.
 
 Kiểm tra:
 
@@ -35,6 +35,14 @@ Kiểm tra:
 - `npm run lint` — pass; `PaymentSetup.tsx` còn dưới giới hạn 600 dòng.
 - `npm run build` — pass.
 - `git diff --check` — pass.
+- `npm run security:smoke` — pass.
+
+Deploy production:
+
+- Commit `cd8faee` (`fix(payment): handle unlocked reports and free vouchers`) đã push lên `origin/main`.
+- Git integration tạo Vercel deployment `dpl_EfGiCpre2ZvB15LCoRg3b6frtEFe`, trạng thái Ready và alias `https://banmenh.online`.
+- Smoke production: homepage `200`, Payment Setup `200`, Numerology KB `1.0` đủ 31 section, entitlement endpoint không auth trả `401`.
+- Kiểm thử cần tài khoản thật còn lại: report đã mở hiển thị CTA đọc lại; report mới + `TEST2K` tạo QR 2.000đ; report mới + voucher 100% mở trực tiếp.
 
 ## 2026-10-26 20:40 +07 — T-CLEAN-PAYMENT-BRANDING chuẩn hóa UI VietQR
 

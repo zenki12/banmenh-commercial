@@ -67,6 +67,7 @@ Kết quả:
 - Voucher đưa tổng tiền về 0đ hiển thị CTA “Mở khóa … ngay”; server tiếp tục validate voucher, tạo purchase 0đ và cấp entitlement qua nhánh `freeUnlock` hiện có.
 - `ALREADY_EXISTS` phát sinh do race được chuyển sang trạng thái đã mở thay vì ErrorState.
 - `npm run typecheck`, `npm run lint`, `npm run build` và `git diff --check` pass; chờ code review trước khi Done.
+- Commit `cd8faee` đã push lên `origin/main` và Vercel production deployment `dpl_EfGiCpre2ZvB15LCoRg3b6frtEFe` đạt trạng thái Ready.
 
 ### T-CLEAN-PAYMENT-BRANDING - Chuẩn hóa ngôn từ thanh toán VietQR trên UI
 

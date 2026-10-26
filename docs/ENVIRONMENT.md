@@ -140,3 +140,12 @@ Còn thiếu:
 - R2 production: `banmenh-tarot-kb-prod`.
 - Vercel Production đã cấu hình `KB_WORKER_URL` và redeploy artifact hiện hành tại `dpl_B8SMajbRSxWa4Ypofa8o59NnwhMv`.
 - Production report smoke trả `kbVersion: 1.0`, đủ 31 section và dữ liệu luận giải thay vì `local-dev-fallback`.
+
+### 2026-10-26 21:04 +07 — Payment zero-voucher UX
+
+- Source commit: `cd8faee`.
+- Vercel deployment: `dpl_EfGiCpre2ZvB15LCoRg3b6frtEFe`.
+- Production alias: `https://banmenh.online`.
+- Trạng thái: Ready.
+- Smoke: homepage/payment page HTTP 200; KB `1.0` đủ 31 section; entitlement endpoint giữ auth boundary HTTP 401 khi không có token.
+- Thay đổi chỉ tác động Payment Setup UI/race handling; backend voucher, payment transaction và entitlement authority không đổi.
