@@ -14,18 +14,6 @@ import {
 import { fetchWithAuth } from "../../lib/api/client";
 import { useAuth } from "../../lib/auth";
 
-const ENTITLEMENT_TYPE_LABELS: Record<string, string> = {
-  single_report: "Báo cáo lẻ",
-  tarot_guide: "Phiên Tarot",
-  tarot_master: "Tarot Master",
-};
-
-const MODULE_LABELS: Record<string, string> = {
-  numerology: "Thần số học",
-  tarot: "Tarot",
-  bundle: "Combo",
-};
-
 function reportParams(report: Report) {
   const params = new URLSearchParams({
     fullName: report.inputSnapshot.fullName,
@@ -118,40 +106,10 @@ function TarotReadingCard({ reading }: { reading: TarotReading }) {
   );
 }
 
-function EntitlementCard({ item }: { item: Entitlement }) {
-  const expiresLabel = item.lifetime
-    ? "Vĩnh viễn"
-    : item.expiresAt
-      ? `Hết hạn: ${new Date(item.expiresAt).toLocaleDateString("vi-VN")}`
-      : null;
-
-  return (
-    <Card as="article" padding="md" variant="glass">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="font-bold text-[var(--bm-text-main)]">
-            {ENTITLEMENT_TYPE_LABELS[item.type] ?? item.type}
-          </p>
-          <p className="mt-1 text-sm text-[var(--bm-text-soft)]">
-            {MODULE_LABELS[item.module] ?? item.module}
-          </p>
-        </div>
-        <span className="rounded-full border border-[var(--bm-border-subtle)] bg-[var(--bm-bg-glass)] px-2 py-0.5 text-xs text-[var(--bm-gold-bright)]">
-          {item.status === "active" ? "Đang hoạt động" : item.status}
-        </span>
-      </div>
-      {expiresLabel ? (
-        <p className="mt-3 text-xs text-[var(--bm-text-muted)]">{expiresLabel}</p>
-      ) : null}
-    </Card>
-  );
-}
-
 export default function AccountPage() {
   const { user, loading, isAnonymous, signInWithGoogle, linkAnonymousToGoogle } =
     useAuth();
   const [entitlements, setEntitlements] = useState<Entitlement[] | null>(null);
-  const [entitlementsLoading, setEntitlementsLoading] = useState(false);
   const [reports, setReports] = useState<Report[] | null>(null);
   const [tarotReadings, setTarotReadings] = useState<TarotReading[] | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -159,11 +117,9 @@ export default function AccountPage() {
 
   useEffect(() => {
     if (!user || isAnonymous) return;
-    setEntitlementsLoading(true);
     fetchWithAuth<{ items: Entitlement[] }>("/api/entitlements")
       .then((data) => setEntitlements(data.items))
-      .catch(() => setEntitlements([]))
-      .finally(() => setEntitlementsLoading(false));
+      .catch(() => setEntitlements([]));
     setHistoryLoading(true);
     setHistoryError(false);
     Promise.all([
@@ -329,28 +285,6 @@ export default function AccountPage() {
         ) : (
           <Card as="div" className="mt-6" padding="md" variant="default">
             <EmptyState title="Chưa có lịch sử Tarot" description="Các trải bài hoàn tất khi đăng nhập sẽ xuất hiện tại đây." />
-          </Card>
-        )}
-      </section>
-
-      <section className="mt-14">
-        <h2>Quyền truy cập</h2>
-        {entitlementsLoading ? (
-          <div className="mt-6">
-            <LoadingState message="Đang tải quyền truy cập..." />
-          </div>
-        ) : entitlements && entitlements.length > 0 ? (
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            {entitlements.map((item) => (
-              <EntitlementCard item={item} key={item.id} />
-            ))}
-          </div>
-        ) : (
-          <Card as="div" className="mt-6" padding="md" variant="default">
-            <EmptyState
-              title="Chưa có quyền truy cập"
-              description="Các gói đã mua sẽ hiển thị trạng thái và thời hạn tại đây."
-            />
           </Card>
         )}
       </section>

@@ -135,7 +135,7 @@ Payment screen:
 MVP:
 
 - Hiển thị thông tin user.
-- Danh sách quyền đã mua.
+- Không hiển thị entitlement kỹ thuật thô; quyền mua được thể hiện trực tiếp trên báo cáo/gói tương ứng.
 - Nhóm Thần số học gồm lịch sử tra cứu chưa mở khóa và danh sách báo cáo đã mua trọn đời; một tài khoản có thể lưu nhiều report cho nhiều người.
 - Báo cáo chưa mở có CTA thanh toán gắn đúng `reportId`; báo cáo đã mở có CTA đọc toàn bộ nội dung.
 - Nhóm Tarot hiển thị lịch sử phiên cloud của tài khoản, gồm lượt free và lượt dùng gói/voucher.

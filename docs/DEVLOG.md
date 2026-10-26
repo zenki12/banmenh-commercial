@@ -22,6 +22,7 @@ Loại: Account History + Report-scoped Entitlement
 - Bắt buộc đơn Thần số học xác minh report thuộc tài khoản trước khi tạo thanh toán; chặn mua lại báo cáo đã mở và đồng bộ trạng thái report sau webhook/payment recovery.
 - Thêm `/api/reports` và `/api/tarot/history` với kiểm tra Firebase Auth, owner-only read và server-only write; mỗi phiên Tarot hoàn tất được lưu cloud cùng loại lượt free/gói/voucher.
 - Hoàn thiện `/account`: tách “Lịch sử tra cứu chưa mở khóa”, “Báo cáo đã mua” và lịch sử Tarot; có loading/error/empty state và CTA đúng theo từng báo cáo.
+- Loại bỏ khu vực “Quyền truy cập” hiển thị entitlement kỹ thuật thô; trạng thái mua nay chỉ xuất hiện trong đúng báo cáo hoặc gói Tarot tương ứng để tránh gây hiểu nhầm.
 - Bổ sung cơ chế claim nguyên tử entitlement Thần số học cũ chưa có `reportId` khi người dùng nhập lại đúng hồ sơ, tránh bắt thanh toán lần hai.
 - Cập nhật shared schema, Firestore rules, data contract, tài liệu Numerology/Tarot/Account Payment và risk register.
 
