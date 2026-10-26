@@ -88,6 +88,9 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   SERVICE_UNAVAILABLE: "Dịch vụ tạm thời gián đoạn, vui lòng thử lại sau.",
 };
 
+export const TAROT_GOOGLE_AUTH_REQUIRED_MESSAGE =
+  "Vui lòng đăng nhập bằng tài khoản Google để nhận 3 lượt trải bài miễn phí mỗi ngày.";
+
 /** Trả về message tiếng Việt user-facing cho một `ErrorCode`. */
 export function getErrorMessage(code: ErrorCode): string {
   return ERROR_MESSAGES[code];

@@ -38,6 +38,7 @@ import {
   type TarotHistoryEntry,
 } from "./tarot-history";
 import { TarotHistoryView } from "./tarot-history-view";
+import { TarotLoginModal } from "./TarotLoginModal";
 import { TarotDictionary } from "./tarot-dictionary";
 import { TarotDailyCard } from "./tarot-daily-card";
 import { NicheConsciousnessCheckView } from "./tarot-niche-consciousness";
@@ -71,7 +72,6 @@ import {
 } from "./tarot-workflow-stages";
 
 type QuestionMode = "suggested" | "custom";
-
 const DEFAULT_QUESTION = "Tôi nên nhìn tình huống hiện tại như thế nào?";
 const STAGE_SEQUENCE: Exclude<Phase, "landing">[] = [
   "fieldSelect",
@@ -84,16 +84,14 @@ const STAGE_SEQUENCE: Exclude<Phase, "landing">[] = [
   "consciousnessCheck",
   "finalReading",
 ];
-
 type TarotQuota = {
   hasPlan: boolean;
   limit: number | null;
   used: number;
   remaining: number | null;
 };
-
 export function TarotExperience() {
-  const { signInAnonymouslyFn, user } = useAuth();
+  const { isAnonymous, signInAnonymouslyFn, user } = useAuth();
   const [phase, setPhase] = useState<Phase>("landing");
   const [modal, setModal] = useState<TarotModalKey>(null);
   const [dailyRevealed, setDailyRevealed] = useState(false);
@@ -123,6 +121,7 @@ export function TarotExperience() {
   const [historyStorageAvailable, setHistoryStorageAvailable] = useState(true);
   const [quota, setQuota] = useState<TarotQuota | null>(null);
   const [upgradeReason, setUpgradeReason] = useState<"daily_limit" | "plan_required" | null>(null);
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [deviceSeed, setDeviceSeed] = useState("");
   useEffect(() => {
     setDeviceSeed(getOrCreateDeviceSeed());
@@ -156,16 +155,21 @@ export function TarotExperience() {
     }
   }, [todayStr]);
   useEffect(() => {
-    if (!user) return;
+    if (!user || isAnonymous) {
+      setQuota(null);
+      return;
+    }
     void refreshQuota();
-  }, [user]);
+  }, [isAnonymous, user]);
 
   async function refreshQuota() {
     try {
       const next = await fetchWithAuth<{ ok: true } & TarotQuota>("/api/tarot/quota");
       setQuota(next);
+      return next;
     } catch {
       // Quota vẫn được enforce server-side; UI giữ trạng thái mặc định nếu tạm thời không tải được.
+      return null;
     }
   }
   async function fetchAiReading(
@@ -175,7 +179,6 @@ export function TarotExperience() {
     setAiLoading(true);
     setAiError(null);
     try {
-      if (!user) await signInAnonymouslyFn();
       const response = await fetchWithAuth<TarotAiReadingResponse>("/api/tarot/reading", {
         method: "POST",
         body: JSON.stringify({
@@ -223,12 +226,12 @@ export function TarotExperience() {
       setAiLoading(false);
     }
   }
-  function finalizeSession() {
-    if (spread > 3 && !quota?.hasPlan) {
+  function startSession(activeQuota: TarotQuota | null = quota) {
+    if (spread > 3 && !activeQuota?.hasPlan) {
       setUpgradeReason("plan_required");
       return;
     }
-    if (spread <= 3 && quota?.remaining === 0 && !quota.hasPlan) {
+    if (spread <= 3 && activeQuota?.remaining === 0 && !activeQuota.hasPlan) {
       setUpgradeReason("daily_limit");
       return;
     }
@@ -245,6 +248,13 @@ export function TarotExperience() {
     setAiResponse(null);
     setAiError(null);
     setPhase("ritualLoading");
+  }
+  function finalizeSession() {
+    if (!user || isAnonymous) {
+      setLoginModalOpen(true);
+      return;
+    }
+    startSession();
   }
   function chooseDeckCard(deckIndex: number) {
     if (!session || selectedIndexes.includes(deckIndex) || selectedIndexes.length >= session.cards.length) return;
@@ -282,7 +292,6 @@ export function TarotExperience() {
     }
     setModal(null);
   }
-
   function handleDailyReveal() {
     setDailyRevealed(true);
     storeDailyDate(DAILY_REVEALED_KEY, todayStr);
@@ -293,7 +302,6 @@ export function TarotExperience() {
     setModal(null);
     setPhase("fieldSelect");
   }
-
   function handleOpenModal(nextModal: TarotModalKey) {
     if (nextModal === "history") {
       const loaded = loadTarotHistory();
@@ -386,7 +394,7 @@ export function TarotExperience() {
             <SpreadSelectView
               hasPlan={quota?.hasPlan ?? false}
               onBack={() => setPhase("question")}
-              onContinue={finalizeSession}
+              onContinue={() => finalizeSession()}
               onLockedSpread={() => setUpgradeReason("plan_required")}
               quotaRemaining={quota?.remaining ?? 3}
               spread={spread}
@@ -465,6 +473,15 @@ export function TarotExperience() {
       {upgradeReason ? (
         <TarotUpgradeModal onClose={() => setUpgradeReason(null)} reason={upgradeReason} />
       ) : null}
+
+      <TarotLoginModal
+        isOpen={loginModalOpen}
+        onClose={() => setLoginModalOpen(false)}
+        onLoginSuccess={() => {
+          setLoginModalOpen(false);
+          void refreshQuota().then((nextQuota) => startSession(nextQuota));
+        }}
+      />
 
       {modal ? (
         <ModalShell

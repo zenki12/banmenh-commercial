@@ -47,8 +47,7 @@ function Spinner() {
 }
 
 function AccountArea() {
-  const { user, loading, isAnonymous, error, signInWithGoogle, linkAnonymousToGoogle, signOutFn } =
-    useAuth();
+  const { user, loading, isAnonymous, error, signInWithGoogle, signOutFn } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -65,33 +64,27 @@ function AccountArea() {
 
   if (loading) return <Spinner />;
 
-  if (!user) {
+  if (!user || isAnonymous) {
     return (
       <div className="relative">
-        <Button onClick={signInWithGoogle} size="sm" variant="primary">
+        <Button
+          leftIcon={(
+            <svg aria-hidden="true" className="size-3.5" fill="none" viewBox="0 0 16 16">
+              <path d="M8 1.5 9.2 6.8 14.5 8l-5.3 1.2L8 14.5 6.8 9.2 1.5 8l5.3-1.2L8 1.5Z" fill="currentColor" />
+            </svg>
+          )}
+          onClick={signInWithGoogle}
+          size="sm"
+          variant="primary"
+        >
           Đăng nhập
         </Button>
         {error ? (
-          <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-xl border border-red-500/40 bg-[#1f0a10] p-3 text-xs leading-5 text-red-200 shadow-2xl backdrop-blur-md">
-            ⚠️ {error.message}
-          </div>
-        ) : null}
-      </div>
-    );
-  }
-
-  if (isAnonymous) {
-    return (
-      <div className="relative flex items-center gap-2">
-        <span className="inline-flex min-h-9 items-center rounded-full border border-[var(--bm-border-subtle)] bg-[var(--bm-bg-glass)] px-3 text-sm text-[var(--bm-text-soft)]">
-          Khách
-        </span>
-        <Button onClick={linkAnonymousToGoogle} size="sm" variant="secondary">
-          Liên kết Google
-        </Button>
-        {error ? (
-          <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-xl border border-red-500/40 bg-[#1f0a10] p-3 text-xs leading-5 text-red-200 shadow-2xl backdrop-blur-md">
-            ⚠️ {error.message}
+          <div
+            className="absolute right-0 top-full z-50 mt-2 w-72 rounded-xl border border-[color-mix(in_srgb,var(--bm-danger)_40%,transparent)] bg-[var(--bm-bg-deep)] p-3 text-xs leading-5 text-[var(--bm-danger-soft)] shadow-[var(--bm-shadow-panel)] backdrop-blur-md"
+            role="alert"
+          >
+            {error.message}
           </div>
         ) : null}
       </div>

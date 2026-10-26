@@ -144,7 +144,7 @@ Rủi ro:
 
 Kiểm soát:
 
-- Firebase Auth kể cả guest Anonymous; rate limit/quota theo user và IP.
+- Luận giải và quota Tarot từ chối guest Anonymous; 3 lượt miễn phí/ngày gắn với UID của tài khoản đăng nhập, kết hợp rate limit theo user và IP.
 - Zod validate request/output; câu hỏi tối đa 200 ký tự, spread MVP chỉ 1/3 lá.
 - Prompt đánh dấu dữ liệu user là untrusted và yêu cầu bỏ qua instruction nằm trong dữ liệu đó.
 - Safety settings, content-safety prompt và bypass AI cho câu hỏi có tín hiệu tự hại/hại người tức thời.

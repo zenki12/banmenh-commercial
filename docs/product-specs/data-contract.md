@@ -161,12 +161,12 @@ Tài liệu này định nghĩa dữ liệu/API cốt lõi để frontend, backe
 
 ### `GET /api/tarot/quota`
 
-- Bắt buộc Firebase Bearer token, chấp nhận tài khoản Anonymous cho hạn mức khách.
+- Bắt buộc Firebase Bearer token của tài khoản không anonymous; token Anonymous trả `401 AUTH_REQUIRED`.
 - Trả `hasPlan`, `used`, `limit` và `remaining`; gói Tarot đang hoạt động dùng `null` cho giới hạn không giới hạn.
 
 ### `POST /api/tarot/reading`
 
-- Bắt buộc Firebase Bearer token.
+- Bắt buộc Firebase Bearer token của tài khoản không anonymous; token Anonymous trả `401 AUTH_REQUIRED` trước khi kiểm tra quota hoặc gọi provider.
 - Backend tăng quota free trong transaction trước khi tạo luận giải.
 - Trả `403 ENTITLEMENT_MISSING` cho spread 5/7/10/12 khi thiếu gói; trả `429 RATE_LIMITED` khi đã dùng 3 lượt free trong ngày.
 

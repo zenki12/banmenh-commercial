@@ -42,6 +42,34 @@ Done        Đã hoàn tất và đối chiếu đủ điều kiện done
 
 ## Ad-hoc - Audit Fixes
 
+### T-AUTH-HEADER-AND-TAROT-GATE - Tinh gọn Header và chặn anonymous dùng quota Tarot
+
+Status: Review
+
+Bối cảnh:
+
+- Header đang hiển thị trạng thái khách ẩn danh và hành động liên kết riêng, làm luồng đăng nhập thiếu nhất quán.
+- Quota Tarot gắn với anonymous UID có thể bị reset khi người dùng đổi phiên, xóa dữ liệu trình duyệt hoặc dùng cửa sổ ẩn danh.
+
+Phạm vi:
+
+- Header chỉ hiển thị một nút đăng nhập Google cho trạng thái chưa có user hoặc user anonymous.
+- Thêm modal đăng nhập Google tại bước bắt đầu trải bài Tarot.
+- Từ chối token anonymous tại API quota và API tạo luận giải; giữ quota 3 lượt/ngày theo Google UID.
+- Không thay đổi quyền truy cập Thần số học, pricing, payment hoặc entitlement.
+
+AI Tools Used:
+
+- Codex: triển khai code, kiểm tra security boundary, accessibility và chạy quality gate.
+
+Kết quả triển khai 2026-10-26:
+
+- Header đã gộp trạng thái chưa đăng nhập và anonymous thành một nút `Đăng nhập`; không còn nhãn `Khách` hoặc nút `Liên kết Google`.
+- Tarot hiển thị modal đăng nhập Google trước nghi thức rút bài, có trạng thái loading, lỗi được announce và tự tải quota rồi tiếp tục phiên sau đăng nhập thành công.
+- `/api/tarot/quota` và `/api/tarot/reading` từ chối token Anonymous bằng `401 AUTH_REQUIRED` trước khi đọc/ghi quota hoặc gọi provider.
+- Anonymous security smoke bằng Firebase token thật pass cho cả hai endpoint; request không token cũng trả `401`.
+- Typecheck, lint, build và `git diff --check` pass; chờ visual smoke bằng browser runner và code review độc lập trước khi chuyển `Done`.
+
 ### T-TAROT-PROFILES-AND-DISCLOSURE - Lưu hồ sơ năng lượng và chuẩn hóa nội dung Tarot
 
 Status: Review

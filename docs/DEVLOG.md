@@ -11,6 +11,41 @@
 
 ---
 
+## 2026-10-26 11:53 +07 — T-AUTH-HEADER-AND-TAROT-GATE siết quota theo tài khoản đăng nhập
+
+Loại: Auth UX + Tarot Security
+
+Đã làm:
+
+- Tinh gọn `AccountArea`: trạng thái chưa có user hoặc anonymous chỉ còn nút `Đăng nhập` với biểu tượng SVG; bỏ hoàn toàn huy hiệu `Khách` và nút `Liên kết Google`.
+- Thêm `TarotLoginModal` dùng `ModalShell`, hỗ trợ đăng nhập Google trực tiếp, loading state, lỗi có `role="alert"`, nút đóng và phục hồi focus theo modal shell hiện có.
+- Chặn bắt đầu nghi thức rút bài nếu chưa có tài khoản không-anonymous; sau đăng nhập thành công, client tải quota bằng token mới rồi mới tiếp tục để tránh race với auth state và giữ đúng quyền gói trả phí.
+- Bỏ fallback tự tạo anonymous token trước khi gọi `/api/tarot/reading`.
+- Từ chối token anonymous tại cả `/api/tarot/quota` và `/api/tarot/reading` trước khi truy cập quota hoặc gọi provider; message đặc thù được định nghĩa một lần trong `packages/shared/src/errors.ts`.
+- Cập nhật data contract và security threat model để phản ánh quota 3 lượt/ngày gắn với UID tài khoản đăng nhập.
+
+Không làm:
+
+- Không thay đổi luồng miễn phí Thần số học, pricing, entitlement, payment, Firestore rules hoặc provider luận giải.
+- Không thêm dependency và không deploy production.
+
+Kiểm tra:
+
+- `npm run typecheck` — pass.
+- `npm run lint` — pass; `TarotExperience.tsx` giữ trong giới hạn 600 dòng.
+- `npm run build` — pass khi chạy riêng; build tạo đủ 48 route. Một lần chạy song song với typecheck/lint và dev server bị OOM môi trường, không tái hiện khi chạy đúng tuần tự.
+- `git diff --check` — pass.
+- HTTP smoke: `/tarot` trả `200`; quota/reading không token trả `401`.
+- Anonymous security smoke bằng Firebase Anonymous token thật: `/api/tarot/quota` và `/api/tarot/reading` đều trả `401` với code `AUTH_REQUIRED`.
+- Visual automation chưa chạy được: browser runner tích hợp lỗi sandbox sau retry và Playwright local thiếu browser binary; không cài thêm phần mềm ngoài scope.
+
+Rủi ro còn lại:
+
+- Cần kiểm thử thủ công popup Google, avatar/menu Header và layout modal trên desktop/mobile bằng Firebase dev account trước khi chuyển task sang `Done`.
+- Task giữ trạng thái `Review` để chờ code review độc lập theo workflow.
+
+---
+
 ## 2026-10-26 10:45 +07 — T-TAROT-PROFILES-AND-DISCLOSURE lưu hồ sơ và chuẩn hóa disclosure
 
 Loại: Tarot UX + Local persistence + Content

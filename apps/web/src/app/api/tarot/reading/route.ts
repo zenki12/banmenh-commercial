@@ -3,6 +3,7 @@ export const runtime = "nodejs";
 
 import {
   createError,
+  TAROT_GOOGLE_AUTH_REQUIRED_MESSAGE,
   tarotAiReadingRequestSchema,
   tarotAiReadingResponseSchema,
   type TarotAiReadingRequest,
@@ -95,7 +96,19 @@ export async function POST(request: Request) {
   }
   let uid: string;
   try {
-    uid = (await adminAuth.verifyIdToken(bearer)).uid;
+    const decoded = await adminAuth.verifyIdToken(bearer);
+    if (decoded.firebase?.sign_in_provider === "anonymous") {
+      return NextResponse.json(
+        {
+          error: {
+            ...createError("AUTH_REQUIRED"),
+            message: TAROT_GOOGLE_AUTH_REQUIRED_MESSAGE,
+          },
+        },
+        { status: 401 },
+      );
+    }
+    uid = decoded.uid;
   } catch {
     return NextResponse.json({ error: createError("AUTH_INVALID_TOKEN") }, { status: 401 });
   }

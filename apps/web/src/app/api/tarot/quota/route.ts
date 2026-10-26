@@ -1,6 +1,6 @@
 export const runtime = "nodejs";
 
-import { createError } from "@banmenh/shared";
+import { createError, TAROT_GOOGLE_AUTH_REQUIRED_MESSAGE } from "@banmenh/shared";
 import { NextResponse } from "next/server";
 import { adminAuth } from "../../../../lib/firebase/admin";
 import { getTarotQuota } from "../../../../lib/tarot/quota";
@@ -16,8 +16,19 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: createError("AUTH_REQUIRED") }, { status: 401 });
   }
   try {
-    const { uid } = await adminAuth.verifyIdToken(bearer);
-    return NextResponse.json({ ok: true, ...(await getTarotQuota(uid)) });
+    const decoded = await adminAuth.verifyIdToken(bearer);
+    if (decoded.firebase?.sign_in_provider === "anonymous") {
+      return NextResponse.json(
+        {
+          error: {
+            ...createError("AUTH_REQUIRED"),
+            message: TAROT_GOOGLE_AUTH_REQUIRED_MESSAGE,
+          },
+        },
+        { status: 401 },
+      );
+    }
+    return NextResponse.json({ ok: true, ...(await getTarotQuota(decoded.uid)) });
   } catch {
     return NextResponse.json({ error: createError("AUTH_INVALID_TOKEN") }, { status: 401 });
   }
